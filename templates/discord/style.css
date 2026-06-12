@@ -1,0 +1,414 @@
+:root {
+    --bg-primary: #5865F2;
+    --bg-gradient-start: #1a1d3a;
+    --bg-gradient-mid: #2d1b69;
+    --bg-gradient-end: #0f1e4a;
+    --card-bg: #313338;
+    --input-bg: #1e1f22;
+    --input-border: #e9dfdf;
+    --input-focus: #5865F2;
+    --text-primary: #f2f3f5;
+    --text-muted: #b5bac1;
+    --text-label: #b5bac1;
+    --link-blue: #8087d1;
+    --btn-bg: #5865F2;
+    --btn-hover: #4752c4;
+    --required-red: #f23f43;
+    --font-primary: "Inter", "gg sans", "Noto Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: var(--font-primary);
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    background: url('banner.webp') no-repeat center center fixed;
+    background-size: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+/* Discord logo top-left */
+.discord-logo {
+    position: fixed;
+    top: 50px;
+    left: 50px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: 0.3px;
+    opacity: 0.95;
+}
+
+.discord-logo img {
+    width: 32px;
+    height: 32px;
+    display: block;
+}
+
+/* Main login card */
+.login-card {
+    position: relative;
+    z-index: 1;
+    background: var(--card-bg);
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    padding: 32px;
+    width: 100%;
+    max-width: 784px;
+    display: flex;
+    gap: 32px;
+    align-items: flex-start;
+    animation: cardIn 0.4s ease-out;
+}
+
+@keyframes cardIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Form section (left) */
+.form-section {
+    flex: 1;
+    min-width: 0;
+}
+
+.welcome {
+    color: var(--text-primary);
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    text-align: center;
+}
+
+.subtext {
+    color: var(--text-muted);
+    font-size: 16px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+label {
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    margin-bottom: 6px;
+    margin-top: 12px;
+}
+
+.required {
+    color: var(--required-red);
+    font-weight: 700;
+    margin-left: 2px;
+}
+
+input[type="text"],
+input[type="password"] {
+    background: transparent;
+    border: 0.1px solid #ffffff88;
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-size: 15px;
+    padding: 10px 12px;
+    height: 41px;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    width: 100%;
+    caret-color: var(--text-primary);
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+    border-color: var(--input-focus);
+    box-shadow: 0 0 0 1px var(--input-focus);
+}
+
+.forgot-link {
+    color: var(--link-blue);
+    font-size: 13px;
+    text-decoration: none;
+    margin-top: 4px;
+    margin-bottom: 16px;
+    display: inline-block;
+    align-self: flex-start;
+}
+
+.forgot-link:hover {
+    text-decoration: underline;
+}
+
+.login-btn {
+    background: var(--btn-bg);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 500;
+    height: 44px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    width: 100%;
+}
+
+.login-btn:hover {
+    background: var(--btn-hover);
+}
+
+.login-btn:disabled,
+.login-btn.loading {
+    background: #4752c4;
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+
+.register-line {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-top: 8px;
+    text-align: left;
+}
+
+.register-link {
+    color: var(--link-blue);
+    text-decoration: none;
+}
+
+.register-link:hover {
+    text-decoration: underline;
+}
+
+.qr-section {
+    width: 240px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding-left: 30px;
+    position: relative;
+}
+
+.qr-box {
+    width: 180px;
+    height: 180px;
+    background: transparent;
+    border-radius: 6px;
+    padding: 20px;
+    margin-top: 17px;
+    margin-left: -7px;
+    margin-bottom: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+#qr-canvas {
+    width: 170px;
+    height: 170px;
+    display: block;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+}
+
+.qr-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+    pointer-events: none;
+}
+
+.qr-title {
+    color: var(--text-primary);
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.qr-desc {
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 12px;
+}
+
+.qr-desc strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.passkey-link {
+    color: var(--link-blue);
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.passkey-link:hover {
+    text-decoration: underline;
+}
+
+.field-error {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    color: #fa777c;
+    font-size: 12px;
+    margin-top: 6px;
+    margin-bottom: 4px;
+}
+
+.field-error.active {
+    display: flex;
+}
+
+.field-error svg {
+    flex-shrink: 0;
+}
+
+.passkey-loader {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.passkey-loader.active {
+    display: flex;
+}
+
+.loader-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid #5865f2;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.passkey-error {
+    display: none;
+    margin-top: 8px;
+    color: #f23f43;
+    font-size: 13px;
+    text-align: center;
+}
+
+.passkey-error.active {
+    display: block;
+}
+
+/* Forgot password modal */
+.fp-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+}
+
+.fp-modal.active {
+    display: flex;
+}
+
+.fp-modal-card {
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 32px;
+    text-align: center;
+    min-width: 280px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    animation: modalIn 0.3s ease-out;
+}
+
+@keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.fp-modal-loader {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #5865f2;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 16px;
+}
+
+.fp-modal-text {
+    color: var(--text-primary);
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+/* Responsive */
+@media (max-width: 830px) {
+    .login-card {
+        flex-direction: column;
+        max-width: 480px;
+        margin: 16px;
+    }
+    .qr-section {
+        width: 100%;
+        border-left: none;
+        border-top: 1px solid #3f4147;
+        padding-left: 0;
+        padding-top: 24px;
+        margin-top: 8px;
+    }
+    .discord-logo {
+        top: 16px;
+        left: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .login-card {
+        padding: 24px;
+    }
+    .welcome {
+        font-size: 20px;
+    }
+    .qr-box {
+        width: 150px;
+        height: 150px;
+    }
+}

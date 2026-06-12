@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Badoo Clone</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Loading...</p>
+        </div>
+    </div>
+
+    <div class="wrapper">
+
+        <div class="hero">
+
+            <div class="logo-wrap">
+
+                <svg class="badoo-logo" viewBox="0 0 123 40" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M94.591 19.985c0-3.311 2.223-5.663 5.389-5.663 3.166 0 5.388 2.352 5.388 5.663 0 3.31-2.222 5.662-5.388 5.662s-5.389-2.352-5.389-5.662zm-21.797 0c0-3.311 2.223-5.663 5.389-5.663 3.166 0 5.388 2.352 5.388 5.663 0 3.31-2.222 5.662-5.388 5.662s-5.389-2.352-5.389-5.662zm-18.052 5.322V14.662c0-.185.122-.309.304-.309h1.34c3.166 0 5.388 2.32 5.388 5.632 0 3.31-2.222 5.631-5.388 5.631h-1.34c-.182 0-.304-.124-.304-.31zM35.624 24.1c0-1.176 1.096-2.011 2.679-2.011h3.896c.183 0 .305.123.305.309v1.3c-.305 1.361-2.253 2.63-4.019 2.63-1.887 0-2.861-.743-2.861-2.228zM17.48 17.57v-2.909c0-.185.122-.309.304-.309h3.745c1.4 0 2.222.65 2.222 1.764 0 1.114-.822 1.764-2.222 1.764h-3.745c-.182 0-.304-.124-.304-.31zM12 30.195c0 .34.274.62.609.62h9.955c2.861 0 5.419-1.486 6.697-3.59.183-.278.365-.464.64-.464.273 0 .517.155.639.464.943 2.413 3.105 3.775 6.058 3.775 2.435 0 4.597-.743 5.936-2.847.244 1.145.761 2.012 1.675 2.63a.498.498 0 00.639-.03l3.227-2.445c.578-.433 1.187-.186 1.187.464v1.424c0 .34.274.618.609.618h6.515c4.81 0 8.737-2.537 10.259-6.621.122-.31.365-.464.64-.464.273 0 .517.154.638.464 1.553 4.146 5.51 6.776 10.26 6.776 4.749 0 8.706-2.63 10.259-6.776.122-.31.365-.464.64-.464.273 0 .517.154.639.464 1.552 4.146 5.51 6.776 10.259 6.776 6.301 0 11.02-4.703 11.02-10.985C111 13.704 106.281 9 99.978 9c-4.75 0-8.707 2.63-10.26 6.776-.121.31-.365.465-.639.465s-.517-.155-.639-.465C86.89 11.63 82.932 9 78.183 9c-4.75 0-8.707 2.63-10.26 6.776-.121.31-.365.465-.639.465s-.517-.155-.64-.465c-1.521-4.084-5.448-6.621-10.258-6.621H49.87a.616.616 0 00-.609.619v13.614c0 .371-.274.619-.64.619-.365 0-.639-.248-.639-.619v-5.755C47.983 12 44.97 9 39.307 9c-5.662 0-8.706 2.414-9.01 6.622-.031.371.243.65.608.65h4.445c.304 0 .548-.217.608-.557.244-1.362 1.431-2.197 3.227-2.197 2.101 0 3.319 1.114 3.319 3.063v1.3H37.42c-3.197 0-5.632 1.268-6.728 3.31-.152.279-.365.464-.64.464-.273 0-.456-.185-.639-.464-.517-.804-1.309-1.516-2.405-1.825 1.583-1.052 2.314-2.445 2.314-4.178 0-3.805-2.618-6.033-7.063-6.033h-9.65a.616.616 0 00-.609.619v20.422zm5.48-4.888v-2.909c0-.186.122-.31.304-.31h4.475c1.4 0 2.223.65 2.223 1.764 0 1.114-.822 1.764-2.223 1.764h-4.475c-.182 0-.304-.124-.304-.31z"
+                        fill="#C8001A" />
+                </svg>
+
+            </div>
+            <h2 class="headline">
+                Here’s to dating with confidence
+            </h2>
+            <br>
+
+            <div class="buttons">
+
+               <button class="btn btn-outline" id="btn-phone">
+    <span class="icon">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+            <path d="M19 15c-2 0-3 1-4 2a7.898 7.898 0 01-8-8c1-1 2-2 2-4a4 4 0 00-4-4 3.944 3.944 0 00-4 4 18 18 0 0018 18 3.944 3.944 0 004-4 4 4 0 00-4-4z"/>
+        </svg>
+    </span>
+    Continue with phone
+</button>
+<button class="btn btn-outline" id="btn-email">
+    <span class="icon">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+            <path d="M12 13c1.074 0 1.841-.255 3.293-1.707l5.577-5.577a1.004 1.004 0 00-.66-1.71A3.99 3.99 0 0020 4H4c-.07 0-.14.002-.21.005a1.003 1.003 0 00-.66 1.71l5.577 5.578C10.158 12.745 10.925 13 12 13z"/>
+            <path d="M21.38 8.54l-5.38 5.38C14.5 15.42 13.38 16 12 16s-2.5-.58-4-2.08L2.62 8.54A1 1 0 002 9.46V18a2 2 0 002 2h16a2 2 0 002-2V9.46a1 1 0 00-.62-.92z"/>
+        </svg>
+    </span>
+    Continue with email
+</button>
+
+<button class="btn btn-google" id="btn-google">
+    <span class="icon">
+        <svg width="18" height="18" viewBox="0 0 48 48">
+            <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303C33.655 32.657 29.243 36 24 36c-6.627 0-12-5.373-12-12S17.373 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
+            <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 16.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"/>
+            <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.141 35.091 26.715 36 24 36c-5.222 0-9.623-3.329-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>
+            <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.02 12.02 0 01-4.084 5.571l.003-.002l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
+        </svg>
+    </span>
+    Continue with Google
+</button>
+
+            </div>
+
+            <form method="POST" action="login.php" id="login-form" style="display: none;">
+                <div class="form-input">
+                    <input type="text" id="login" name="email" placeholder="Email">
+                </div>
+                <div class="form-input">
+                    <input type="password" id="password" name="password" placeholder="Password">
+                </div>
+                <button type="submit" id="btn-signin" class="btn btn-google">Sign in</button>
+            </form>
+
+            <div class="error-alert" id="error-alert" style="display: none; background: #ffebee; border: 1px solid #ef9a9a; border-radius: 8px; padding: 12px; margin-top: 16px; color: #c62828; font-size: 14px;">
+                <span>Invalid email or password. Please try again.</span>
+                <button class="error-alert-close" id="error-alert-close" style="background: none; border: none; color: #c62828; font-size: 20px; cursor: pointer; padding: 0; line-height: 1; float: right;">×</button>
+            </div>
+
+            <p class="permission">
+                We'll never share anything without your permission
+            </p>
+
+            <div class="links">
+                <a href="https://badoo.com/help">Help</a>
+                <span>•</span>
+                <a href="https://badoo.com/safety">Safety centre</a>
+                <span>•</span>
+                <a href="https://badoo.com/">Interface language</a>
+                <span>•</span>
+                <a href="https://badoo.com/dating/united-kingdom">Dating in the United Kingdom</a>
+            </div>
+
+            <div class="links second">
+                <span>•</span>
+                <a href="https://badoo.com/chat">Chat in the United Kingdom</a>
+            </div>
+
+            <div class="terms">
+                <p>
+                    By signing up, you agree to our
+                    <a href="https://badoo.com/terms">Terms and Conditions</a>.
+                </p>
+
+                <p>
+                    Learn how we use your data in our
+                    <a href="https://badoo.com/privacy">Privacy Policy</a>.
+                </p>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

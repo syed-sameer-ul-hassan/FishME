@@ -1,0 +1,339 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    font-family: Arial, Helvetica, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+
+    background:
+        radial-gradient(circle at 20% 50%, rgba(0, 255, 170, .15), transparent 20%),
+        radial-gradient(circle at 80% 30%, rgba(0, 255, 170, .15), transparent 20%),
+        linear-gradient(90deg, #232c38, #080c14);
+}
+
+
+
+.logo {
+    position: absolute;
+    top: 52px;
+    left: 42px;
+    z-index: 10;
+}
+
+.logo-img {
+    width: 130px;
+    height: auto;
+    display: block;
+}
+
+.login-card {
+    width: 840px;
+    height: 730px;
+    background: white;
+    display: flex;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .4);
+
+
+    box-shadow:
+        0 20px 60px rgba(0, 0, 0, .45);
+}
+
+
+.left-panel {
+    width: 45%;
+    position: relative;
+
+    background-image: url("https://st.deviantart.net/eclipse/sisu/image-9-713635295.png");
+    background-size: cover;
+    background-position: center;
+}
+
+.overlay {
+    position: absolute;
+    inset: 0;
+
+    background: rgba(0, 0, 0, .45);
+
+    color: #fff;
+
+    padding: 55px 30px;
+}
+
+.overlay h1 {
+    font-size: 37px;
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: .5px;
+}
+
+.overlay p {
+    margin-top: 20px;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.artist {
+    position: absolute;
+    left: 30px;
+    bottom: 25px;
+
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+
+.right-panel {
+    width: 55%;
+    position: relative;
+    padding: 40px;
+}
+
+
+.right-panel h2 {
+    text-align: center;
+    font-size: 26px;
+    font-weight: 600;
+    margin-bottom: 28px;
+}
+
+
+
+.field-label {
+    display: block;
+    margin-bottom: 6px;
+
+    font-size: 16px;
+    font-weight: 700;
+    color: #444;
+}
+
+
+
+input[type="text"],
+input[type="password"] {
+    width: 100%;
+    height: 44px;
+
+    border: 1px solid #d8d8d8;
+    outline: none;
+
+    padding: 0 10px;
+
+    margin-bottom: 14px;
+
+    font-size: 13px;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+    border-color: #05c46b;
+}
+
+
+
+.password-wrap {
+    position: relative;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 8px;
+
+    border: none;
+    background: none;
+
+    cursor: pointer;
+
+    font-size: 14px;
+}
+
+
+
+.options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin-bottom: 15px;
+
+    font-size: 11px;
+}
+
+.options label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.options a {
+    color: #666;
+    text-decoration: none;
+}
+
+.options a:hover {
+    text-decoration: underline;
+}
+
+
+
+.next-btn {
+    width: 100%;
+    height: 44px;
+
+    border: none;
+    cursor: pointer;
+
+    font-weight: 700;
+    font-size: 13px;
+
+    background: linear-gradient(90deg,
+            #14d5f3,
+            #14ea7f);
+}
+
+.next-btn:hover {
+    opacity: .95;
+}
+
+
+
+.divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    margin: 18px 0;
+
+    color: #999;
+    font-size: 12px;
+}
+
+.divider span {
+    flex: 1;
+    height: 1px;
+    background: #e3e3e3;
+}
+
+
+
+.social {
+    position: relative;
+
+    width: 100%;
+    height: 44px;
+
+    margin-bottom: 8px;
+
+    border: 1px solid #dcdcdc;
+    background: #fff;
+
+    cursor: pointer;
+
+    font-size: 13px;
+    color: #333;
+}
+
+.social:hover {
+    background: #f7f7f7;
+}
+
+.social svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+
+
+.signup {
+    margin-top: 15px;
+
+    text-align: center;
+
+    font-size: 16px;
+}
+
+.signup a {
+    color: #05c46b;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.signup a:hover {
+    text-decoration: underline;
+}
+
+
+
+.terms {
+    margin-top: 25px;
+
+    font-size: 12px;
+    line-height: 1.7;
+
+    color: #4e4e4e;
+}
+
+
+@media (max-width:700px) {
+
+    .login-card {
+        width: 95%;
+        max-width: 420px;
+        min-height: auto;
+    }
+
+    .left-panel {
+        display: none;
+    }
+
+    .right-panel {
+        width: 100%;
+    }
+
+    .logo {
+        left: 20px;
+        top: 20px;
+    }
+
+    .logo-img {
+        width: 90px;
+    }
+}
+
+.error-alert {
+    background: #ffebee;
+    border: 1px solid #ef9a9a;
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #c62828;
+    font-size: 14px;
+}
+
+.error-alert-close {
+    background: none;
+    border: none;
+    color: #c62828;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.next-btn.loading {
+    opacity: 0.7;
+    cursor: not-allowed;
+}

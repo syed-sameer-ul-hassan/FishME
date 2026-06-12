@@ -1,0 +1,1 @@
+this file ui is cumpleat mobile view and developer tool are not configer 
