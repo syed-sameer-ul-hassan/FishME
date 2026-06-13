@@ -443,7 +443,7 @@ $backUrl = 'templates/' . preg_replace('/[^a-zA-Z0-9_-]/', '', $template) . '/';
         </div>
 
         <div class="footer-line">
-            <span>FishMe — Educational Use Only</span>
+            <span>FishMe</span>
             <span><?php echo date('Y-m-d H:i:s'); ?></span>
         </div>
 

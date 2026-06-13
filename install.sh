@@ -29,9 +29,9 @@ echo -e "${GREEN}  Phishing Awareness & Security Training Platform${RESET}"
 echo -e "${ORANGE}  Educational Use Only — University Project${RESET}"
 echo
 
-echo -e "${CYAN}┌─────────────────────────────────────────────────────────────┐${RESET}"
-echo -e "${CYAN}│${RESET}                  ${BOLD}FishMe Installer${RESET}                           ${CYAN}│${RESET}"
-echo -e "${CYAN}└─────────────────────────────────────────────────────────────┘${RESET}"
+echo -e "${CYAN}─────────────────────────────────────────────────────────────${RESET}"
+echo -e "${CYAN}${RESET}                  ${BOLD}FishMe Installer${RESET}                           ${CYAN}│${RESET}"
+echo -e "${CYAN}─────────────────────────────────────────────────────────────${RESET}"
 echo
 
 echo -e "  ${CYAN}[i]${RESET} Source     : ${WHITE}${FISHME_SRC}${RESET}"
@@ -47,7 +47,6 @@ if ! command -v php &>/dev/null; then
     echo -e "  ${ORANGE}[!]${RESET} Warning: PHP is not installed. FishMe requires PHP to run."
 fi
 
-# Install cloudflared
 echo -e "  ${CYAN}[i]${RESET} Checking for cloudflared (Cloudflare Tunnel)..."
 if command -v cloudflared &>/dev/null; then
     echo -e "  ${GREEN}[✓]${RESET} cloudflared is already installed: $(cloudflared --version 2>&1 | head -1)"
