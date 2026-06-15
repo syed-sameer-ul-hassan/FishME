@@ -21,9 +21,6 @@
 
 FishMe is a phishing tool for creating and managing phishing campaigns. It provides a CLI-based platform for creating phishing templates, capturing credentials, and analyzing results.
 
-## Keywords
-phishing tool, phishing templates, phishing campaign, credential capture, phishing, CLI tool, bash, PHP, phishing platform, cybersecurity
-
 ## Features
 
 ### Core Features
