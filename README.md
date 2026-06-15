@@ -66,16 +66,16 @@ graph TB
     F --> I[Templates]
     G --> J[Data Storage]
     
-    style A fill:#e1f5ff
-    style B fill:#fff4e1
-    style C fill:#ffe1f5
-    style D fill:#e1ffe1
-    style E fill:#f5e1ff
-    style F fill:#e1f5ff
-    style G fill:#fff4e1
-    style H fill:#f5e1ff
-    style I fill:#e1f5ff
-    style J fill:#fff4e1
+    style A fill:#4a90e2
+    style B fill:#4a90e2
+    style C fill:#4a90e2
+    style D fill:#4a90e2
+    style E fill:#4a90e2
+    style F fill:#4a90e2
+    style G fill:#4a90e2
+    style H fill:#4a90e2
+    style I fill:#4a90e2
+    style J fill:#4a90e2
 ```
 
 ### Tunneling Support
@@ -264,15 +264,15 @@ graph TB
     D --> D3[Cloudflare Tunnel]
     E --> E4[Local Only]
     
-    style A fill:#e1f5ff
-    style B fill:#fff4e1
-    style C fill:#ffe1f5
-    style D fill:#e1ffe1
-    style E fill:#f5e1ff
-    style B1 fill:#e1f5ff
-    style C2 fill:#fff4e1
-    style D3 fill:#ffe1f5
-    style E4 fill:#e1ffe1
+    style A fill:#4a90e2
+    style B fill:#4a90e2
+    style C fill:#4a90e2
+    style D fill:#4a90e2
+    style E fill:#4a90e2
+    style B1 fill:#4a90e2
+    style C2 fill:#4a90e2
+    style D3 fill:#4a90e2
+    style E4 fill:#4a90e2
 ```
 
 ### Plugin Management
@@ -303,16 +303,16 @@ graph TB
     F --> I[on_session_end]
     F --> J[on_template_load]
     
-    style A fill:#e1f5ff
-    style B fill:#fff4e1
-    style C fill:#ffe1f5
-    style D fill:#e1ffe1
-    style E fill:#f5e1ff
-    style F fill:#e1f5ff
-    style G fill:#fff4e1
-    style H fill:#ffe1f5
-    style I fill:#e1ffe1
-    style J fill:#f5e1ff
+    style A fill:#4a90e2
+    style B fill:#4a90e2
+    style C fill:#4a90e2
+    style D fill:#4a90e2
+    style E fill:#4a90e2
+    style F fill:#4a90e2
+    style G fill:#4a90e2
+    style H fill:#4a90e2
+    style I fill:#4a90e2
+    style J fill:#4a90e2
 ```
 
 ### Configuration
@@ -336,15 +336,15 @@ graph TD
     A --> H[ui<br/>colors, banner]
     A --> I[security<br/>sanitization, limits]
     
-    style A fill:#e1f5ff
-    style B fill:#fff4e1
-    style C fill:#ffe1f5
-    style D fill:#e1ffe1
-    style E fill:#f5e1ff
-    style F fill:#e1f5ff
-    style G fill:#fff4e1
-    style H fill:#ffe1f5
-    style I fill:#e1ffe1
+    style A fill:#4a90e2
+    style B fill:#4a90e2
+    style C fill:#4a90e2
+    style D fill:#4a90e2
+    style E fill:#4a90e2
+    style F fill:#4a90e2
+    style G fill:#4a90e2
+    style H fill:#4a90e2
+    style I fill:#4a90e2
 ```
 
 ### Logging
@@ -364,11 +364,11 @@ flowchart LR
     C --> D[Rotation]
     D --> E[Retention]
     
-    style A fill:#e1f5ff
-    style B fill:#fff4e1
-    style C fill:#ffe1f5
-    style D fill:#e1ffe1
-    style E fill:#f5e1ff
+    style A fill:#4a90e2
+    style B fill:#4a90e2
+    style C fill:#4a90e2
+    style D fill:#4a90e2
+    style E fill:#4a90e2
 ```
 
 ## Configuration
