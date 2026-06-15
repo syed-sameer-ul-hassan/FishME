@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+title: FishMe
+message: If you use this software in your work, please cite it using the following metadata.
+type: software
+authors:
+  - family-names: syed
+    given-names: Sameer ul hassan
+    orcid: https://orcid.org/0000-0000-0000-0000
+version: 1.0.0
+doi: 10.5281/zenodo.XXXXXX
+date-released: 2026-06-13
+url: https://github.com/syed-sameer-ul-hassan/FishME
+repository: https://github.com/syed-sameer-ul-hassan/FishME
+keywords:
+  - phishing
+  - phishing tool
+  - cybersecurity
+license: Apache-2.0
+abstract: FishMe is a phishing tool for creating and managing phishing campaigns. It provides a CLI-based platform for creating phishing templates, capturing credentials, and analyzing results.

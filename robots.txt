@@ -1,0 +1,14 @@
+# robots.txt for FishMe GitHub Repository
+# Allow all bots to crawl the repository
+
+User-agent: *
+Allow: /
+
+# Disallow certain paths if needed
+Disallow: /.git/
+Disallow: /.github/workflows/
+Disallow: /node_modules/
+Disallow: /vendor/
+
+# Sitemap location
+Sitemap: https://github.com/syed-sameer-ul-hassan/FishME/sitemap.xml

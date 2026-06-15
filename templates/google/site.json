@@ -1,0 +1,10 @@
+{
+  "name": "Google",
+  "slug": "google",
+  "brand": "Google",
+  "domain": "google.com",
+  "category": "productivity",
+  "description": "Google account login page template for phishing  and security  demos.",
+  "entry_page": "login.html",
+  "allocated_url": "google.com-d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a1b2c3.c0d2e4f6g8h0i2.page.dev"
+}

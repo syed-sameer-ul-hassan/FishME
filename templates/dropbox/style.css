@@ -1,4 +1,3 @@
-* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -10,7 +9,6 @@ body {
     color: #1e1919;
 }
 
-/* HEADER */
 
 .header {
     height: 56px;
@@ -33,7 +31,6 @@ body {
     font-size: 18px;
 }
 
-/* LOGIN SECTION */
 
 .login-section {
     min-height: 440px;
@@ -54,7 +51,6 @@ body {
     margin-bottom: 20px;
 }
 
-/* SOCIAL BUTTONS */
 
 .social-btn {
     width: 100%;
@@ -79,7 +75,6 @@ body {
     height: 18px;
 }
 
-/* DIVIDER */
 
 .divider {
     display: flex;
@@ -96,7 +91,6 @@ body {
     background: #ddd;
 }
 
-/* FORM */
 
 label {
     display: block;
@@ -136,7 +130,6 @@ input:focus {
     background: #0050d7;
 }
 
-/* FOOTER */
 
 .footer {
     background: #000;
@@ -185,7 +178,6 @@ input:focus {
     font-size: 15px;
 }
 
-/* COOKIE BANNER */
 
 .cookie-banner {
     position: fixed;
@@ -242,7 +234,6 @@ input:focus {
     color: #fff;
 }
 
-/* MODALS */
 
 .modal-overlay {
     position: fixed;
@@ -305,7 +296,6 @@ input:focus {
     cursor: pointer;
 }
 
-/* LANGUAGE MODAL */
 
 .language-box {
     width: 480px;
@@ -336,7 +326,6 @@ input:focus {
     text-decoration: underline;
 }
 
-/* MOBILE */
 
 @media(max-width:768px) {
 

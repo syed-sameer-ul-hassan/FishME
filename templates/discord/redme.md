@@ -1,1 +1,0 @@
-this site is cumpleat in ui  but dv tool and mobile and tablit view is not apply 

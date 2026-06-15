@@ -12,7 +12,6 @@
     --foot: #8b949e;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: "Mona Sans", "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
 
 body {
     background: var(--bg);

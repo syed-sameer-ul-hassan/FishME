@@ -25,12 +25,11 @@ echo -e " (_ o._)__| |   | .---.  \\  :| _ _--.   | | (_ o _) |  |'  \\   .---."
 echo -e " |(_,_)     |   | \\    \`-'  ||( ' ) |   | |  (_,_)  |  | \\  \`-'    /"
 echo -e " |   |      |   |  \\       / (_{;}_)|   | |  |      |  |  \\       / "
 echo -e " '---'      '---'   \`-..-'  '(_,_) '---' '--'      '--'   \`'-..-'  ${WHITE} Installer${RESET}"
-echo -e "${GREEN}  Phishing Awareness & Security Training Platform${RESET}"
-echo -e "${ORANGE}  Educational Use Only — University Project${RESET}"
+echo -e "${GREEN}  Phishing Tool${RESET}"
 echo
 
 echo -e "${CYAN}─────────────────────────────────────────────────────────────${RESET}"
-echo -e "${CYAN}${RESET}                  ${BOLD}FishMe Installer${RESET}                           ${CYAN}│${RESET}"
+echo -e "${CYAN}${RESET}              ${BOLD}FishMe Installer${RESET}                           ${CYAN}│${RESET}"
 echo -e "${CYAN}─────────────────────────────────────────────────────────────${RESET}"
 echo
 
@@ -72,6 +71,42 @@ else
             echo -e "      ${WHITE}wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb${RESET}"
             echo -e "      ${WHITE}sudo dpkg -i cloudflared-linux-amd64.deb${RESET}"
         fi
+    fi
+fi
+
+echo -e "  ${CYAN}[i]${RESET} Checking for loclx (LocalXpose Tunnel)..."
+if command -v loclx &>/dev/null; then
+    echo -e "  ${GREEN}[✓]${RESET} loclx is already installed: $(loclx --version 2>&1 | head -1)"
+else
+    echo -e "  ${CYAN}[-]${RESET} Downloading loclx..."
+    mkdir -p ~/Downloads
+    LOC_ARCH=$(uname -m)
+    case "$LOC_ARCH" in
+        x86_64)  LOC_URL="https://api.localxpose.io/api/v2/downloads/loclx-linux-amd64.zip" ;;
+        aarch64) LOC_URL="https://api.localxpose.io/api/v2/downloads/loclx-linux-arm64.zip" ;;
+        armv7l|armv6l) LOC_URL="https://api.localxpose.io/api/v2/downloads/loclx-linux-arm.zip" ;;
+        *)       LOC_URL="" ;;
+    esac
+
+    if [[ -n "$LOC_URL" ]]; then
+        wget -q --show-progress "$LOC_URL" -O ~/Downloads/loclx.zip
+        LOC_TMP=$(mktemp -d)
+        if unzip -o -j ~/Downloads/loclx.zip -d "$LOC_TMP" >/dev/null 2>&1; then
+            if sudo mv "$LOC_TMP/loclx" /usr/local/bin/loclx 2>/dev/null; then
+                sudo chmod +x /usr/local/bin/loclx
+                echo -e "  ${GREEN}[✓]${RESET} loclx installed: $(loclx --version 2>&1 | head -1)"
+            else
+                echo -e "  ${ORANGE}[!]${RESET} Could not install loclx to /usr/local/bin."
+                echo -e "      ${DIM}FishMe can install it on first use, or run:${RESET}"
+                echo -e "      ${WHITE}loclx account login${RESET} after manual install."
+            fi
+        else
+            echo -e "  ${ORANGE}[!]${RESET} Could not extract loclx. Install manually from https://localxpose.io"
+        fi
+        rm -rf "$LOC_TMP"
+    else
+        echo -e "  ${ORANGE}[!]${RESET} Unsupported architecture for auto loclx install: ${LOC_ARCH}"
+        echo -e "      ${DIM}Download manually from https://localxpose.io${RESET}"
     fi
 fi
 

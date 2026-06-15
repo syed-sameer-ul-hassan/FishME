@@ -29,10 +29,9 @@ $backUrl = 'templates/' . preg_replace('/[^a-zA-Z0-9_-]/', '', $template) . '/';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>[ FISHME ] — Phishing Simulation Alert</title>
+    <title>[ FISHME ] — Phishing Alert</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             background: #05080f;
@@ -345,7 +344,6 @@ $backUrl = 'templates/' . preg_replace('/[^a-zA-Z0-9_-]/', '', $template) . '/';
         <span class="dot dot-r"></span>
         <span class="dot dot-y"></span>
         <span class="dot dot-g"></span>
-        <span class="term-title">fishme@localhost — simulation_result.sh</span>
     </div>
     <div class="term-body">
 
@@ -358,7 +356,6 @@ $backUrl = 'templates/' . preg_replace('/[^a-zA-Z0-9_-]/', '', $template) . '/';
    ▒███  ▒     ▒███  ▒▒▒▒███ ▒███ ▒███  ▒███      ▒███  ▒███ ▒   █
    █████       █████ ██████  ████ █████ █████     █████ ██████████
   ▒▒▒▒▒       ▒▒▒▒▒ ▒▒▒▒▒▒  ▒▒▒▒ ▒▒▒▒▒ ▒▒▒▒▒     ▒▒▒▒▒ ▒▒▒▒▒▒▒▒▒▒</div>
-        <div class="logo-sub">// phishing awareness &amp; security training platform</div>
 
         <div class="alert-header">
             <div class="alert-icon">
@@ -370,7 +367,6 @@ $backUrl = 'templates/' . preg_replace('/[^a-zA-Z0-9_-]/', '', $template) . '/';
             </div>
             <div class="alert-text">
                 <h1>[ ACCESS INTERCEPTED ]</h1>
-                <p>You submitted credentials to a simulated phishing page. This was a controlled security training exercise, no real data was stolen.</p>
             </div>
         </div>
 
@@ -401,7 +397,6 @@ $backUrl = 'templates/' . preg_replace('/[^a-zA-Z0-9_-]/', '', $template) . '/';
         </div>
 
         <div class="section">
-            <div class="section-head">// awareness_module.txt</div>
             <div class="lessons-grid">
                     <div class="lesson-num">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>

@@ -5,7 +5,6 @@ document.addEventListener('DOMContentLoaded', function () {
     var passwordInput = document.getElementById('password');
     var qrCanvas = document.getElementById('qr-canvas');
 
-    // Draw base QR code on canvas
     if (qrCanvas) {
         var ctx = qrCanvas.getContext('2d');
         var base = new Image();

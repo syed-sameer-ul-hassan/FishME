@@ -1,0 +1,30 @@
+# Code Owners File
+# This file defines which individuals or teams are responsible for code in this repository.
+
+# Default code owner for the entire repository
+* @syed-sameer-ul-hassan
+
+# Core script
+/fishme @syed-sameer-ul-hassan
+
+# PHP backend
+/*.php @syed-sameer-ul-hassan
+
+# Library modules
+/lib/ @syed-sameer-ul-hassan
+
+# Templates
+/templates/ @syed-sameer-ul-hassan
+
+# Configuration
+/config/ @syed-sameer-ul-hassan
+
+# Documentation
+/docs/ @syed-sameer-ul-hassan
+/README.md @syed-sameer-ul-hassan
+
+# Installation
+/install.sh @syed-sameer-ul-hassan
+
+# GitHub templates and configuration
+.github/ @syed-sameer-ul-hassan

@@ -1,5 +1,4 @@
 :root {--bg: #1a1a22;--bg-card: #242329;--bg-input: #1a1a22;--text: #ececef;--muted: #bfbfc3;--border: #4a4a4f;--border-subtle: #2e2e35;--accent: #82b0f9;--accent-hover: #6a9bf6;--icon: #8c8c91;--red: #dd2b0e;}
-* { box-sizing: border-box; margin: 0; padding: 0; }
 body {font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans", Ubuntu, sans-serif;background-color: var(--bg);color: var(--text);font-size: 14px;min-height: 100vh;display: flex;flex-direction: column;}
 .page-wrapper {flex: 1;display: flex;flex-direction: column;align-items: center;justify-content: center;padding: 32px 16px 80px;}
 .flash-alert {display: none;width: 100%;max-width: 520px;background-color: #2b2a31;border: 1px solid var(--border-subtle);border-radius: 8px;padding: 12px 44px 12px 14px;align-items: center;gap: 10px;position: relative;margin-bottom: 20px;overflow: hidden;}

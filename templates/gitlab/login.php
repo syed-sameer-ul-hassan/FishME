@@ -29,7 +29,6 @@ saveCapture([
     'template'   => $template
 ]);
 
-// Redirect to educational disclosure page (training simulation)
 ?>
 <!DOCTYPE html>
 <html lang="en">

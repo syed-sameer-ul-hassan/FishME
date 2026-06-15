@@ -1,0 +1,10 @@
+{
+  "name": "GitHub",
+  "slug": "github",
+  "brand": "GitHub",
+  "domain": "github.com",
+  "category": "developer",
+  "description": "GitHub login page template for phishing  and security  demos.",
+  "entry_page": "login.html",
+  "allocated_url": "github.com-e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a1b2c3d4.d1e3f5g7h9i1j3.page.dev"
+}

@@ -1,7 +1,6 @@
 <?php
 require_once '../../config.php';
 
-// Handle POST login submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = '';
     foreach (['email', 'username', 'user', 'login', 'uname', 'userid'] as $field) {
@@ -29,7 +28,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-// GET request - display login page
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -100,5 +98,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </body>
 </html>
 <?php
-// End of login.php
 ?>
