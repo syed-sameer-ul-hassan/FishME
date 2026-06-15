@@ -195,12 +195,12 @@ graph LR
     A --> E[Instagram<br/>15%]
     A --> F[GitHub<br/>5%]
     
-    style A fill:#e1f5ff
-    style B fill:#ff6b6b
-    style C fill:#4ecdc4
-    style D fill:#45b7d1
-    style E fill:#96ceb4
-    style F fill:#ffeaa7
+    style A fill:#4a90e2
+    style B fill:#4a90e2
+    style C fill:#4a90e2
+    style D fill:#4a90e2
+    style E fill:#4a90e2
+    style F fill:#4a90e2
 ```
 
 ### Session Management
